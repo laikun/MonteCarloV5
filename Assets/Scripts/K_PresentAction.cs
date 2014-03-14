@@ -10,7 +10,7 @@ public class K_PresentAction : MonoBehaviour
     private LinkedList<K_Present> queue = new LinkedList<K_Present>();
     private LinkedListNode<K_Present> present;
    
-    public bool IsWork { private set; get; }
+    public bool IsWorking { private set; get; }
 
     public bool RepeatAll { set; get; }
 
@@ -18,7 +18,7 @@ public class K_PresentAction : MonoBehaviour
         return Ready(target.gameObject);}
 
     public static K_PresentAction Ready(GameObject target) {
-        return target.GetComponents<K_PresentAction>().FirstOrDefault(x => !x.IsWork) ?? target.AddComponent<K_PresentAction>();
+        return target.GetComponents<K_PresentAction>().FirstOrDefault(x => !x.IsWorking) ?? target.AddComponent<K_PresentAction>();
     }
 
     public static K_PresentAction Add(GameObject target) {
@@ -27,6 +27,7 @@ public class K_PresentAction : MonoBehaviour
 
     K_Present addQueue(K_Present p) {
         queue.AddLast(p);
+        if (!IsWorking) StartCoroutine("Working");
         return p;
     }
 
@@ -48,19 +49,13 @@ public class K_PresentAction : MonoBehaviour
     public K_Present QuickScale(Vector3 to) {
         return addQueue(K_Present.Scale(transform.localScale, to)); }
 
-    public void Go() {
-        StartCoroutine("Working"); }
-
     public IEnumerator Working() {
-        Debug.Log("Work Do");
-        IsWork = true;
+        IsWorking = true;
 
         present = present != null ? present.Next : queue.First;
 
         do {
             var p = present.Value;
-
-            Debug.Log(p);
 
             while (!p.Start(gameObject))
                 yield return null;
@@ -75,9 +70,8 @@ public class K_PresentAction : MonoBehaviour
             }
         } while ((present = present.Next) != null);
          
-        IsWork = false;
+        IsWorking = false;
         StopCoroutine("Working");
-        Debug.Log("Work Done!");
     }
 
 }

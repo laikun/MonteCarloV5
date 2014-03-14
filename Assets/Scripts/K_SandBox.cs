@@ -13,7 +13,6 @@ public class K_SandBox : MonoBehaviour
         p.Delay = 2f;
 
         pa.Next(p);
-        pa.Go();
         pa.Next(new Vector3(0,10,0));
     }
 	

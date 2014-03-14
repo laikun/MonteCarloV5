@@ -15,8 +15,12 @@ public class K_Present
     public bool Repeat { get; set; }
 
     public virtual void Work(GameObject go, float eval) {}
-    public virtual bool Start(GameObject go) {return true;}
-    public virtual bool End(GameObject go) {return true;}
+
+    public virtual bool Start(GameObject go) {
+        return true;}
+
+    public virtual bool End(GameObject go) {
+        return true;}
 
     public K_Present() {
         this.Delay = 0f;
@@ -24,18 +28,8 @@ public class K_Present
         this.Curve = K_Present.NormalLinear;
     }
 
-    public K_Present<T> Next<T>(T from, T to) {
-        K_Present<T> p = MemberwiseClone() as K_Present<T>;
-        p.From = from;
-        p.To = to;
-        return p;
-    }
-
-    public K_Present<T> Next<T>(T to) {
-        return Next<T>(((K_Present<T>)this).To, to); }
-    
-    public K_Present Clone() {
-        return MemberwiseClone() as K_Present; }
+    public K_Present Next<T>(T to) {
+        return (this as K_Present<T>).Next(to); }
 
     public static AnimationCurve NormalLinear{ get { return AnimationCurve.Linear(0f, 0f, 1f, 1f); } }
 
@@ -74,33 +68,40 @@ public class K_Present<T> : K_Present
     public T To { get; set; }
 
     public delegate void DoWork(GameObject go,float eval,K_Present<T> p);
-    public delegate bool Flag(GameObject go, K_Present<T> p);
+
+    public delegate bool Flag(GameObject go,K_Present<T> p);
     
     public DoWork ExWork = (x, y, z) => {};
     public Flag StartFlag = (x, y) => true;
     public Flag EndFlag = (x, y) => true;
-
-    protected K_Present() {}
 
     public K_Present(T from, T to) {
         this.From = from;
         this.To = to;
     }
 
-    public override void Work(GameObject go, float eval)
-    {
+    public override void Work(GameObject go, float eval) {
         ExWork(go, eval, this);
     }
 
-    public override bool Start(GameObject go)
-    {
-        return StartFlag(go, this);
-    }
+    public override bool Start(GameObject go) {
+        return StartFlag(go, this); }
 
-    public override bool End(GameObject go)
-    {
+    public override bool End(GameObject go) {
         return EndFlag(go, this);
     }
+
+    public K_Present<T> Next(T to) {
+        return Next(To, to);
+    }
+
+    public K_Present<T> Next(T from, T to) {
+        K_Present<T> p = MemberwiseClone() as K_Present<T>;
+        p.From = from;
+        p.To = to;
+        return p;
+    }
+
     public override string ToString() {
         return string.Format("[K_Present: From => {0} To => {1}] ", From, To); }
 }

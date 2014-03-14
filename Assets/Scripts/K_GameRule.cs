@@ -51,15 +51,9 @@ public class K_GameRule : Singleton<K_GameRule>
 
         public void SelectCard(K_PlayingCard card)
         {
-//            TweenScale.Begin(card.gameObject, 0.05f, new Vector2(rule.cell.Scale - scaleN, rule.cell.Scale - scaleN)).PlayForward();
-//            TweenScale ts = TweenScale.Begin(card.gameObject, 0.1f, new Vector2(rule.cell.Scale + scaleN, rule.cell.Scale + scaleN));
-//            ts.delay = 0.05f;
-//            ts.PlayForward();
-
             K_PresentAction pa = K_PresentAction.Ready(card);
-            pa.QuickScale(new Vector2(rule.cell.Scale - scaleN, rule.cell.Scale - scaleN)).Duration = 0.05f;
-            pa.Next(new Vector2(rule.cell.Scale + scaleN, rule.cell.Scale + scaleN)).Duration = 0.1f;
-            pa.Go();
+            pa.QuickScale(new Vector3(rule.cell.Scale - scaleN, rule.cell.Scale - scaleN, 1f)).Duration = 0.05f;
+            pa.Next<Vector3>(new Vector3(rule.cell.Scale + scaleN, rule.cell.Scale + scaleN, 1f)).Duration = 0.1f;
         }
 
         public void UnSelectCard(K_PlayingCard card)
