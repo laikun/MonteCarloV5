@@ -1,0 +1,59 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{FEE1D630-5260-39B3-A092-B074ACFAAA25}") = "MonteCarloV5", "Assembly-CSharp-vs.csproj", "{C2D15454-B44C-6ED7-3E37-7D34A0F5FF15}"
+EndProject
+Project("{FEE1D630-5260-39B3-A092-B074ACFAAA25}") = "MonteCarloV5", "Assembly-CSharp-Editor-vs.csproj", "{3D25F33A-7E46-FCBA-7A82-4201820D303B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2D15454-B44C-6ED7-3E37-7D34A0F5FF15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D15454-B44C-6ED7-3E37-7D34A0F5FF15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D15454-B44C-6ED7-3E37-7D34A0F5FF15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D15454-B44C-6ED7-3E37-7D34A0F5FF15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+			GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+		Policies = $0
+		$0.TextStylePolicy = $1
+		$1.inheritsSet = VisualStudio
+		$1.inheritsScope = text/plain
+		$1.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $2
+		$2.IndentSwitchBody = True
+		$2.StructBraceStyle = EndOfLine
+		$2.EnumBraceStyle = EndOfLine
+		$2.MethodBraceStyle = DoNotChange
+		$2.ConstructorBraceStyle = EndOfLine
+		$2.DestructorBraceStyle = EndOfLine
+		$2.ElseIfNewLinePlacement = SameLine
+		$2.ArrayInitializerBraceStyle = NextLine
+		$2.BeforeMethodDeclarationParentheses = False
+		$2.BeforeMethodCallParentheses = False
+		$2.BeforeConstructorDeclarationParentheses = False
+		$2.BeforeDelegateDeclarationParentheses = False
+		$2.NewParentheses = False
+		$2.inheritsSet = Mono
+		$2.inheritsScope = text/x-csharp
+		$2.scope = text/x-csharp
+		$0.TextStylePolicy = $3
+		$3.FileWidth = 120
+		$3.TabWidth = 4
+		$3.EolMarker = Unix
+		$3.inheritsSet = Mono
+		$3.inheritsScope = text/plain
+		$3.scope = text/plain
+	EndGlobalSection
+
+EndGlobal

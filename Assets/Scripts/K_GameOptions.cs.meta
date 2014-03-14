@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 0aaffd87d3a184f93ac3d49745e97259
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - optPanel: {instanceID: 0}
+  - optVslider: {fileID: 100010, guid: df5860c0f17fc43edab2daf227313b84, type: 2}
+  - optCheckbox: {fileID: 100012, guid: f835b6765432a4041a087cc095f0fd21, type: 2}
+  - Deck: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
