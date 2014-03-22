@@ -7,14 +7,19 @@ public class K_SandBox : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        K_PresentAction pa = K_PresentAction.Ready(this.gameObject);
+//        K_ICatridge cat = K_ProgressSet.ReadyToScale(gameObject);
+//
+//        K_TransTween<Vector3> tt = new K_TransTween<Vector3>(transform.localScale, new Vector3(10f, 10f, 10f), new K_TimeCurve());
+//        cat.AddLast(tt);
+//        tt.RepeatRewind = true;
+//
+//        cat.Play();
 
-        K_Present p = K_Present.Position(this.transform.position, new Vector3(10,0,0));
-        p.Delay = 2f;
-
-        pa.Next(p);
-        pa.Next(new Vector3(0,10,0));
+        K_TransTween<Color> tt;
+        K_ICatridge cat = K_ProgressSet.ReadyToColor(gameObject, out tt);
+        cat.Add(tt = tt.Next(Color.red, 1f));
+        cat.Play();
+        cat.Add(tt.Next(Color.blue, 1f));
+        cat.Loop = true;
     }
-	
 }
-

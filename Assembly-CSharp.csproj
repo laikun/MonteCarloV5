@@ -198,8 +198,8 @@
      <Compile Include="Assets\Scripts\K_OptionSetting.cs" />
      <Compile Include="Assets\Scripts\K_OverLap.cs" />
      <Compile Include="Assets\Scripts\K_PlayingCard.cs" />
-     <Compile Include="Assets\Scripts\K_Present.cs" />
-     <Compile Include="Assets\Scripts\K_PresentAction.cs" />
+     <Compile Include="Assets\Scripts\K_PlayingCardManager.cs" />
+     <Compile Include="Assets\Scripts\K_Progress.cs" />
      <Compile Include="Assets\Scripts\K_ReadyToWork.cs" />
      <Compile Include="Assets\Scripts\K_SandBox.cs" />
      <Compile Include="Assets\Scripts\K_Score.cs" />

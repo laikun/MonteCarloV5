@@ -23,7 +23,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-			GlobalSection(MonoDevelopProperties) = preSolution
+						GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Assembly-CSharp.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
@@ -34,7 +34,7 @@ Global
 		$2.IndentSwitchBody = True
 		$2.StructBraceStyle = EndOfLine
 		$2.EnumBraceStyle = EndOfLine
-		$2.MethodBraceStyle = DoNotChange
+		$2.MethodBraceStyle = EndOfLine
 		$2.ConstructorBraceStyle = EndOfLine
 		$2.DestructorBraceStyle = EndOfLine
 		$2.ElseIfNewLinePlacement = SameLine

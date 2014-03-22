@@ -32,6 +32,17 @@ namespace Extensions
             this.value = value;
         }
     }
+
+    public static class NormalCurve {
+        public static AnimationCurve Linear{ get { return AnimationCurve.Linear(0f, 0f, 1f, 1f); } }
+        
+        public static AnimationCurve EaseInOut { get { return AnimationCurve.EaseInOut(0f, 0f, 1f, 1f); } }
+        
+        public static AnimationCurve EaseIn{ get { return new AnimationCurve(new Keyframe(0f, 0f, 0f, 0f), new Keyframe(1f, 1f, 2f, 0f)); } }
+        
+        public static AnimationCurve EaseOut{ get { return new AnimationCurve(new Keyframe(0f, 0f, 0f, 2f), new Keyframe(1f, 1f, 0f, 0f)); } }        
+    }
+
     public static class ExtensionMethods
     {
         public static T GetSafeComponent<T>(this GameObject obj) where T : MonoBehaviour

@@ -13,9 +13,8 @@ public class K_DeckScript : Singleton<K_DeckScript>
 
     public K_PlayingCard[] Cards {get {return cards.ToArray();}}
     
-    public void Init(IList<K_PlayingCard> cards)
+    public void Init(K_PlayingCard[] cards)
     {
-//        this.transform.SetXY(Vector2.zero);
         foreach (K_PlayingCard card in cards){
             card.transform.localScale = this.transform.localScale;
             card.gameObject.layer = this.gameObject.layer;
@@ -23,6 +22,8 @@ public class K_DeckScript : Singleton<K_DeckScript>
         }
 
         cards.Shuffle();
+        int sort = 0;
+        Array.ForEach(cards, x => x.GetComponentInChildren<SpriteRenderer>().sortingOrder = sort++);
         this.cards = new Queue<K_PlayingCard>(cards);
         this.GetOrAddComponent<K_OnStage>().InStage();
     }
@@ -36,7 +37,5 @@ public class K_DeckScript : Singleton<K_DeckScript>
         return cards.Count > 0 ? cards.Dequeue() : null;
     }
 
-    public K_PlayingCard[] Get(int few){
-        return null;
-    }
+
 }
