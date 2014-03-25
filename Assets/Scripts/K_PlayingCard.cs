@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Extensions;
 using System.Linq;
 using UnityEngine;
 
@@ -10,9 +11,13 @@ public class K_PlayingCard : MonoBehaviour
 
     public Vector2 Size{ private set; get; }
 
+    public float ScaleN {set; get;}
+
     public Color HoverColor;
 
     public UIEventTrigger UI;
+
+    public K_ReadyToWork RTW;
 
     public K_PlayingCard SetCard(string str, int num)
     {
@@ -21,7 +26,7 @@ public class K_PlayingCard : MonoBehaviour
         this.Size = GetComponentInChildren<SpriteRenderer>().bounds.size;
 
         this.UI = this.GetComponent<UIEventTrigger>();
-
+        this.RTW = transform.GetOrAddComponent<K_ReadyToWork>();
 
         return this;
     }
@@ -39,5 +44,28 @@ public class K_PlayingCard : MonoBehaviour
     public bool PairCard(K_PlayingCard card)
     {
         return !PairSuit(card) && PairNumber(card);
+    }
+
+    ////////////////////////////////////////////////
+
+    void select(){
+        RTW.LerfScale(new Vector3(ScaleN * 0.9f, ScaleN * 0.9f, 1f), K_TimeCurve.EaseOut(0.05f));
+        RTW.LerfScale(new Vector3(ScaleN * 1.1f, ScaleN * 1.1f, 1f), K_TimeCurve.EaseOut(0.1f));
+        RTW.Play();
+    }
+
+    void unselect(){
+        RTW.LerfScale(new Vector3(ScaleN, ScaleN, 1f), K_TimeCurve.EaseOut(0.05f));
+        RTW.Play();
+    }
+
+    void hover(){
+        RTW.LerfColor(this.HoverColor, 0.5f);
+        RTW.Play();
+    }
+
+    void hoverout(){
+        RTW.LerfColor(Color.white, 0.1f);
+        RTW.Play();
     }
 }

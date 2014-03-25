@@ -3,27 +3,30 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class K_OnStage : MonoBehaviour
+public class K_OnStage : Singleton<K_OnStage>
 {
-    int backStage;
-    int stage;
+    static int backStage;
+    static int stage;
 
-    void OnStage(bool on)
-    {
-        Array.ForEach(this.gameObject.GetComponentsInChildren<Transform>(), x => x.gameObject.layer = on ? stage : backStage);
-    }   
-    
-    public void InStage()
-    {
-        this.OnStage(true);
+    static void OnStage(GameObject go, bool on) {
+        Array.ForEach(go.GetComponentsInChildren<Transform>(), x => x.gameObject.layer = on ? stage : backStage);
     }
     
-    public void OutStage()
-    {
-        this.OnStage(false);
+    public static void In(MonoBehaviour go) {
+        In(go.gameObject);
+    }
+    public static void In(GameObject go) {
+        OnStage(go, true);
     }
 
-    void Awake(){
+    public static void Out(MonoBehaviour go) {
+        Out(go.gameObject);
+    }
+    public static void Out(GameObject go) {
+        OnStage(go, false);
+    }
+    
+    public static void Init() {
         backStage = LayerMask.NameToLayer("BackStage");
         stage = LayerMask.NameToLayer("Stage");
     }

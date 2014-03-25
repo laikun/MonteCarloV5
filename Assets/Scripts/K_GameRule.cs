@@ -22,127 +22,81 @@ public class K_GameRule : Singleton<K_GameRule>
     public GameObject Jumbotron;
     public K_Time time;
     Present present;
+    K_ReadyToWork monoWork;
 
     class Present
     {
         K_GameRule rule = K_GameRule.Instance;
-        float scaleN;
-        Vector2 nextCardPosition;
-        Vector2 deckPosition;
         UICamera input;
 
-        public Present()
-        {
+        public Present() {
             input = rule.uicamera;
 
-            scaleN = rule.cell.Scale * rule.options.separate;
-
-            deckPosition = rule.cell.LastCellPosition;
-            deckPosition.x += rule.options.separate + rule.cardManager.Size.x * rule.cell.Scale * 1.2f;
-            
-            nextCardPosition = new Vector2(deckPosition.x - rule.cardManager.Size.x * rule.cell.Scale * 0.2f, deckPosition.y);
         }
 
-        private void inputAllow(bool on)
-        {
+        private void inputAllow(bool on) {
             input.enabled = on;
             Debug.Log("Allow Input : " + on);
         }
 
-        public void SelectCard(K_PlayingCard card)
-        {
-//            K_PresentDeck pa = K_PresentDeck.Ready(card);
-//            pa.QuickScale(new Vector3(rule.cell.Scale - scaleN, rule.cell.Scale - scaleN, 1f)).Duration = 0.05f;
-//            pa.Next<Vector3>(new Vector3(rule.cell.Scale + scaleN, rule.cell.Scale + scaleN, 1f)).Duration = 0.1f;
-        }
-
-        public void UnSelectCard(K_PlayingCard card)
-        {
-
-            TweenScale.Begin(card.gameObject, 0.1f, new Vector2(rule.cell.Scale, rule.cell.Scale)).PlayForward();
-        }
-
-        public void ShowNextCard()
-        {
-            TweenPosition.Begin(rule.deck.Cards.Length > 0 ? rule.deck.Cards.First().gameObject : rule.deck.gameObject, 0.4f, nextCardPosition).PlayForward();
-        }
-
-        public void OnDeckPosition(Action afterAction)
-        {
-            Debug.Log(deckPosition);
-            inputAllow(false);
-            Array.ForEach(rule.cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
-
-            TweenPosition tw = TweenPosition.Begin(rule.deck.gameObject, 0.4f, new Vector3(deckPosition.x, deckPosition.y));
-            tw.method = UITweener.Method.EaseOut;        
-            tw.onFinished.Add(new EventDelegate(() => {
-                foreach (K_PlayingCard card in rule.cardManager.Cards)
-                {
-                    card.transform.localScale = deckPosition;
-                    card.GetOrAddComponent<K_OnStage>().InStage();
-                }
-                afterAction();
-            }));
-            tw.PlayForward();
-        }
-
-        public void ReGame(Action action)
-        {
-            inputAllow(false);
-
-            Array.ForEach(rule.deck.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
-            List<K_PlayingCard> temp = new List<K_PlayingCard>(rule.cardManager.Cards.Length);
-            temp.AddRange(rule.cell.Cards.Reverse());
-            temp.AddRange(rule.foundation.Cards.Reverse());
-
-            // imaiti...
-            temp.ForEach(card => card.transform.SetScale(rule.cell.Scale));
-
-            TweenPosition tw = TweenPosition.Begin(rule.deck.gameObject, 0.3f, Vector3.zero);
-            tw.method = UITweener.Method.EaseOut;
-            tw.onFinished.Add(new EventDelegate(() => {
-                foreach (K_PlayingCard card in temp)
-                {
-                    TweenPosition tp = TweenPosition.Begin(card.gameObject, 0.5f, Vector3.zero);
-                    tp.delay = rule.time.NextDelayTime(0.03f);
-                    tp.PlayForward();
-                }
-            }));            
-
-            temp.Last().GetComponentInChildren<TweenPosition>().onFinished.Add(new EventDelegate(() => {
-                inputAllow(true);
-                Array.ForEach(rule.cardManager.Cards, card => {
-                    card.transform.localScale = Vector2.zero;
-                    card.gameObject.SetActive(true);
-                    card.GetOrAddComponent<K_OnStage>().InStage();
-                });
-                rule.cardManager.GetOrAddComponent<K_OnStage>().InStage();
-                action();
-            }));
+        public void ReGame(Action action) {
+//            inputAllow(false);
+//
+//            Array.ForEach(rule.deck.Cards, card => card.GetOrAddComponent<K_OnStage>().Out());
+//            List<K_PlayingCard> temp = new List<K_PlayingCard>(rule.cardManager.Cards.Length);
+//            temp.AddRange(rule.cell.Cards.Reverse());
+//            temp.AddRange(rule.foundation.Cards.Reverse());
+//
+//            // imaiti...
+//            temp.ForEach(card => card.transform.SetScale(rule.cell.Scale));
+//
+//            TweenPosition tw = TweenPosition.Begin(rule.deck.gameObject, 0.3f, Vector3.zero);
+//            tw.method = UITweener.Method.EaseOut;
+//            tw.onFinished.Add(new EventDelegate(() => {
+//                foreach (K_PlayingCard card in temp) {
+//                    TweenPosition tp = TweenPosition.Begin(card.gameObject, 0.5f, Vector3.zero);
+//                    tp.delay = rule.time.NextDelayTime(0.03f);
+//                    tp.PlayForward();
+//                }
+//            }));            
+//
+//            temp.Last().GetComponentInChildren<TweenPosition>().onFinished.Add(new EventDelegate(() => {
+//                inputAllow(true);
+//                Array.ForEach(rule.cardManager.Cards, card => {
+//                    card.transform.localScale = Vector2.zero;
+//                    card.gameObject.SetActive(true);
+//                    card.GetOrAddComponent<K_OnStage>().In();
+//                });
+//                rule.cardManager.GetOrAddComponent<K_OnStage>().In();
+//                action();
+//            }));
         }
     }
 
-    public void Ready()
-    {
+    public void Ready() {
+        K_OnStage.Init();
+        monoWork = this.GetOrAddComponent<K_ReadyToWork>();
         cardManager.CreateCards();
         foundation.Init(cardManager.Size, cardManager.Cards.Length);
         cell.Init(options.GetOptValue("Column"), options.GetOptValue("Row"), cardManager.Size, options.separate);
-        deck.transform.localScale = new Vector2(cell.Scale, cell.Scale);
-        deck.Init(cardManager.Cards);
+
+        Vector2 deckPosition = cell.LastCellPosition;
+        deckPosition.x += options.separate + cardManager.Size.x * cell.Scale * 1.2f;
+
+        deck.transform.SetScale(cell.Scale);
+        deck.Init(cardManager.Cards, deckPosition);
 
         present = new Present();
 
         TriggerRe.SetActive(false);
         TriggerGo.SetActive(true);
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().InStage());
 
         timeLimit.Init(options.GetOptValue("TimeLimit"), () => GameOver("TIME OVER"));
         turnLimit.Init(options.GetOptValue("TurnLimit"), () => GameOver("TURN OVER"));
         hintLimit.Init(options.GetOptValue("Hint"), () => hintLimit.gameObject.SetActive(false));
     }
 
-    public void GameOver(string str)
-    {
+    public void GameOver(string str) {
         uicamera.enabled = false;
         Jumbotron.SetActive(true);
         Jumbotron.GetComponentInChildren<UILabel>().text = str;
@@ -155,8 +109,7 @@ public class K_GameRule : Singleton<K_GameRule>
         };
     }
 
-    public void Play()
-    {
+    public void Play() {
         Action draw = () => {};
 
         TriggerGo.gameObject.SetActive(false);
@@ -176,7 +129,7 @@ public class K_GameRule : Singleton<K_GameRule>
         };
 
         UIEventListener.Get(hintLimit.gameObject).onClick += go => {
-            Array.ForEach(hit(), card => present.SelectCard(card));
+            Array.ForEach(hit(), card => card.SendMessage("select"));
             hintLimit.Down(-1);
         };
 
@@ -184,21 +137,19 @@ public class K_GameRule : Singleton<K_GameRule>
         List<K_PlayingCard> selected = new List<K_PlayingCard>();
 
         Action<K_PlayingCard> select = card => {
-            if (selected.Count > 0 && selected.Last().Equals(card))
-            {
+            if (selected.Count > 0 && selected.Last().Equals(card)) {
                 selected.RemoveAll(x => x.Equals(card));
-                present.UnSelectCard(card);
-            } else
-            {
+                card.SendMessage("unselect");
+            } else {
                 selected.Add(card);
-                present.SelectCard(card);
+                card.SendMessage("select");
             }
         };
 
         Action reSelection = () => {
             if (selected.Count < 1)
                 return;
-            selected.Where(card => !card.Equals(selected.Last())).ToList().ForEach(card => present.UnSelectCard(card));
+            selected.Where(card => !card.Equals(selected.Last())).ToList().ForEach(card => card.SendMessage("unselect"));
             selected = new List<K_PlayingCard>(new K_PlayingCard[]{selected.Last()});
         };
 
@@ -206,8 +157,7 @@ public class K_GameRule : Singleton<K_GameRule>
             if (selected.Count < 2)
                 return false;
 
-            if (!cell.IsNeighbor(selected.ToArray()) || 1 != selected.GroupBy(card => card.Number).Count())
-            {
+            if (!cell.IsNeighbor(selected.ToArray()) || 1 != selected.GroupBy(card => card.Number).Count()) {
                 reSelection();
                 return false;
             }
@@ -233,15 +183,13 @@ public class K_GameRule : Singleton<K_GameRule>
                 ui.onHover = null;
                 ui.onPress = null;
 
-                card.GetComponentInChildren<UIButton>().enabled = false;
+//                card.GetComponentInChildren<UIButton>().enabled = false;
             });
 
             score.Add(1);
             if (autoDraw)
                 draw();
         };
-
-        int drawCount = 0;
 
         // Add Delegate Action To Card In Cell
         draw = () => {
@@ -250,26 +198,19 @@ public class K_GameRule : Singleton<K_GameRule>
             if (cell.BlankCell == 0)
                 return;
 
-            cell.Pack();
-            K_PlayingCard[] cards = new K_PlayingCard[cell.BlankCell];
-            for (int i=0; i<cards.Length; i++)
-            {
-                cards [i] = deck.Draw();
-            }
-            cell.DrawToCell(cards);
+            cell.DrawToCell(deck.Draws(cell.BlankCell));
 
             selected.Clear();
 
             // Check GameOVer
-            if (hit().Length < 1)
-            {
+            if (hit().Length < 1) {
                 GameOver("GAME OVER");
                 return;
             }
 
             Array.ForEach(cell.Cards, card => {
                 turnLimit.Reset();
-                present.UnSelectCard(card);
+                card.SendMessage("unselect");
 
                 UIEventListener ui = UIEventListener.Get(card.gameObject);
                 ui.ResetEventListener();
@@ -281,36 +222,18 @@ public class K_GameRule : Singleton<K_GameRule>
                     founding();
                 };
 
-//                ui.onHover += (x, b) => {
-//                    if (!b)
-//                        return;
-//                    selected.Add(x.GetComponentInChildren<K_PlayingCard>());
-//                    present.SelectCard(selected.Last());
-//                };
-//
-//                ui.onPress += (x, b) => {
-//                    if (!b)
-//                        foundion();
-//                };
             });
-
-            cell.Cards.Last().GetComponentInChildren<TweenPosition>().onFinished.Add(new EventDelegate(() => {
-                turnLimit.Down();
-                present.ShowNextCard();
-                uicamera.enabled = true;
-            }));
 
             TriggerRe.SetActive(true);
         };
 
-        present.OnDeckPosition(() => {
-            timeLimit.Down();
-            draw();
-        });
+        deck.SendMessage("onDeckPosition");
+        K_ReadyToWork rtw = K_ReadyToWork.All ["Deck"];
+        monoWork.AddDelayWork(x => rtw.IsWorkDone, x => draw());
+        monoWork.Play();
     }
 
-    public void ReGame()
-    {
+    public void ReGame() {
         uicamera.enabled = false;
 
         Jumbotron.SetActive(false);
@@ -321,7 +244,7 @@ public class K_GameRule : Singleton<K_GameRule>
         present.ReGame(() => {
             uicamera.enabled = true;
             TriggerGo.SetActive(true);
-            deck.Init(cardManager.Cards);
+            deck.ReInit(cardManager.Cards);
         });
 
         // Sync Problem?
@@ -331,16 +254,15 @@ public class K_GameRule : Singleton<K_GameRule>
         timeLimit.Reset();
     }
 
-    public void End()
-    {
+    public void End() {
         TriggerRe.SetActive(false);
         TriggerGo.SetActive(false);
         Jumbotron.SetActive(false);
         cell.ClearAll();
         foundation.Clear();
         deck.Clear();
-        deck.GetOrAddComponent<K_OnStage>().OutStage();
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
+        K_OnStage.Out(deck);
+        Array.ForEach(cardManager.Cards, card => K_OnStage.Out(card));
 
         score.Reset();
         timeLimit.Stop();

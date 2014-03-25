@@ -39,7 +39,7 @@ public class K_Foundation : Singleton<K_Foundation>
             foundations [i].position = new Vector2((2 * i + 1) * unitx / 2 - this.transform.localScale.x / 2 - Math.Abs(this.transform.localScale.x), this.transform.localScale.y);
         }
 
-        FoundInPosition = new Vector3(K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale, this.transform.localScale.y);
+        FoundInPosition = new Vector3(K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale, this.transform.position.y);
     }
 
     public void Founding(K_PlayingCard[] cards)
@@ -55,7 +55,7 @@ public class K_Foundation : Singleton<K_Foundation>
 
     void FoundIn(K_PlayingCard[] cards)
     {
-        cards = cards.OrderBy(card => card.transform.localScale.x).ToArray();
+        cards = cards.OrderBy(card => card.transform.position.x).ToArray();
 
         foreach (K_PlayingCard card in cards)
         {

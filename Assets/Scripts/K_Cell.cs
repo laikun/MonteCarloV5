@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Linq;
 using System;
 using System.Collections;
@@ -23,12 +23,15 @@ public class K_Cell : Singleton<K_Cell>
     
     public int BlankCell { get { return cells.Count(cell => cell.card == null); } }
 
+    public Vector2 LastCellPosition { get { return cells.Last().position; } }
+    
+    float cellInX;
+    
     public Vector2 Position(K_PlayingCard card) {
         return Array.Find(cells, cell => cell.card.Equals(card)).position;
     }
     
-    public void Init(int column, int row, Vector2 size, float separate)
-    {
+    public void Init(int column, int row, Vector2 size, float separate) {
         float[] px = new float[column];
         float[] py = new float[row];
 
@@ -36,12 +39,14 @@ public class K_Cell : Singleton<K_Cell>
                            (this.transform.localScale.y - (row - 1) * separate) / row);
         Scale = Mathf.Min(Unit.x / size.x, Unit.y / size.y);
 
+        Vector3 zp = new Vector3(this.transform.position.x - this.transform.localScale.x / 2,
+                                 this.transform.localScale.y / 2 + this.transform.position.y);
+
         for (int i = 0; i < px.Length; i++) {
-            px [i] = (2 * i + 1) * Unit.x / 2 + separate * i - this.transform.localScale.x / 2 - Math.Abs(this.transform.localScale.x);
+            px [i] = (2 * i + 1) * Unit.x / 2 + separate * i + zp.x;
         }
-        
         for (int i = 0; i < py.Length; i++) {
-            py [i] = ((2 * i + 1) * Unit.y / 2 + separate * i) * -1 + this.transform.localScale.y / 2 - Math.Abs(this.transform.localScale.y);
+            py [i] = ((2 * i + 1) * Unit.y / 2 + separate * i) * -1 + zp.y;
         }
 
         cells = new Cell[py.Length * px.Length];
@@ -56,33 +61,22 @@ public class K_Cell : Singleton<K_Cell>
         cellInX = K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale;
     }
 
-    public void Pack()
-    {
-        Queue<K_PlayingCard> cardsInCell = new Queue<K_PlayingCard>(this.Cards);
-        Array.ForEach(cells, cell => cell.card = cardsInCell.Count > 0 ? cardsInCell.Dequeue() : null);
-    }
-
-    public void DrawToCell(IList<K_PlayingCard> cards)
-    {
-        Queue<K_PlayingCard> cardsInCell = new Queue<K_PlayingCard>(cards);
-        Array.ForEach(cells, cell => cell.card = cell.card ?? cardsInCell.Dequeue());
+    public void DrawToCell(K_PlayingCard[] cards) {
+        Queue<K_PlayingCard> cardsInCell = new Queue<K_PlayingCard>(Cards);
+        Array.ForEach(cards, card => cardsInCell.Enqueue(card));
+        Array.ForEach(cells, cell => cell.card = cardsInCell.Dequeue());
         CellIn();
     }
 
-    public void Clear(IList<K_PlayingCard> cards)
-    {
+    public void Clear(IList<K_PlayingCard> cards) {
         Array.ForEach(cards.ToArray(), card => Array.Find(cells, cell => card.Equals(cell.card)).card = null);
     }
 
-    public void ClearAll()
-    {
+    public void ClearAll() {
         Array.ForEach(cells, cell => cell.card = null);
     }
 
-    public Vector2 LastCellPosition { get { return cells.Last().position; } }
-
-    public bool IsNeighbor(IList<K_PlayingCard> cards)
-    {
+    public bool IsNeighbor(IList<K_PlayingCard> cards) {
         if (cards.Count < 2)
             return false;
 
@@ -102,35 +96,26 @@ public class K_Cell : Singleton<K_Cell>
         return false;
     }
 
-    float cellInX;
-
-    void CellIn()
-    {
+    void CellIn() {
+        int idx = 0;
         foreach (K_PlayingCard card in Cards.Reverse()) {
             Cell cell = Array.Find(cells, c => card.Equals(c.card));
             if (cell.position == card.transform.GetXY())
                 continue;
 
-            TweenPosition tp;
-            float d = (K_GameOptions.Instance.screenSize.x / 2 + card.transform.localScale.x) / 10 - 0.1f;
-
-            if (card.transform.localScale.y != cell.position.y) {
-                tp = TweenPosition.Begin(card.gameObject, d, new Vector3(-cellInX, card.transform.localScale.y));
-                tp.method = UITweener.Method.EaseIn;
-                tp.onFinished.Add(new EventDelegate(() => {
-                    K_PlayingCard c = UITweener.current.GetComponentInChildren<K_PlayingCard>();
-                    Vector2 p = this.Position(c);
-                    c.transform.SetXY(new Vector2(cellInX, p.y));
-                    tp = TweenPosition.Begin(c.gameObject, (K_GameOptions.Instance.screenSize.x / 2 - p.x) / 10 - 0.1f, p);
-                    tp.method = UITweener.Method.EaseOut;
-                    tp.PlayForward();
-                }));
+            card.RTW.Delay(0.05f * idx++);
+            card.RTW.AddWork(x => K_OnStage.In(x));
+            if (card.transform.position.y != cell.position.y) {
+                card.RTW.LerfPosition(new Vector3(-cellInX, card.transform.position.y, card.transform.position.z), 
+                                           K_TimeCurve.EaseIn(0.1f * Vector2.Distance(new Vector2(-cellInX, cell.position.y), card.transform.position)));
+                card.RTW.LerfPosition(new Vector3(cellInX, cell.position.y, card.transform.position.z),
+                                           cell.position.V3(card),
+                                           K_TimeCurve.EaseOut(0.1f * Vector2.Distance(new Vector2(cellInX, cell.position.y), cell.position)));
             } else {
-                tp = TweenPosition.Begin(card.gameObject, d, cell.position);
-                tp.method = UITweener.Method.EaseInOut;
+                float d = Vector2.Distance(cell.position, card.transform.position);
+                card.RTW.LerfPosition(cell.position.V3(card), K_TimeCurve.EaseInOut(0.1f * d));
             }
-            tp.delay = K_Time.Instance.NextDelayTime(0.05f);
-            tp.PlayForward();
+            card.RTW.Play();
         }
     }
 }

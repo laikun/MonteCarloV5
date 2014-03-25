@@ -3,14 +3,13 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Extensions;
 
 public class K_PlayingCardManager : MonoBehaviour
 {
     public K_PlayingCard[] Cards{ private set; get; }
     
     public GameObject prefab;
-
-    public Color HoverColor;
 
     public Vector2 Size{ private set; get; }
 
@@ -69,17 +68,14 @@ public class K_PlayingCardManager : MonoBehaviour
             card.name = x.name;
             card.transform.parent = this.transform;
             card.transform.position = this.transform.position;
-            card.gameObject.layer = this.gameObject.layer;
             card.GetComponentInChildren<SpriteRenderer>().sprite = x;
-            card.transform.localScale = Vector2.one;
-
+            card.transform.SetScale(Vector2.one);
             K_PlayingCard pc = card.GetComponent<K_PlayingCard>();
             pc.SetCard(x.name.First().ToString(), int.Parse(Regex.Match(x.name, @"\d{2}").Value));
-            pc.HoverColor = HoverColor;
             playingCards.Add(pc);
         };
         Cards = playingCards.ToArray();
         Size = Cards[0].GetComponentInChildren<SpriteRenderer>().bounds.size;
-    }    
+    }
 }
 
