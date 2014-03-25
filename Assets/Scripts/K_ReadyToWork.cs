@@ -7,15 +7,22 @@ public class K_ReadyToWork : MonoBehaviour
 {
     public static Dictionary<string, K_ReadyToWork> All = new Dictionary<string, K_ReadyToWork>();
 
-    void Awake(){
+    void Awake() {
         All.Add(this.name, this);
     }
 
     delegate IEnumerator Work();
+
     Queue<Work> Works = new Queue<Work>();
 
     public bool IsPlaying { get; private set; }
-    public bool IsWorkDone {get {if (!this.IsPlaying && this.Works.Count == 0) Debug.Log("WORK DONE"); return !this.IsPlaying && this.Works.Count == 0;}}
+
+    public bool IsWorkDone {
+        get { 
+            if (!this.IsPlaying && this.Works.Count == 0)
+                Debug.Log("WORK DONE");
+            return !this.IsPlaying && this.Works.Count == 0;}
+    }
 
     public void Play() {
         if (!IsPlaying)
@@ -36,7 +43,7 @@ public class K_ReadyToWork : MonoBehaviour
         this.IsPlaying = false;
     }
 
-    IEnumerator monoWork(Action<K_ReadyToWork> work){
+    IEnumerator monoWork(Action<K_ReadyToWork> work) {
         work(this);
         yield break;
     }
@@ -64,7 +71,10 @@ public class K_ReadyToWork : MonoBehaviour
     public void AddLoopWork(Action<K_ReadyToWork> work, Func<K_ReadyToWork, bool> flag) {
         this.AddWork(loopWork(work, flag));
     }
-    
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    /*                                                                                */
+    ////////////////////////////////////////////////////////////////////////////////////
     IEnumerator delay(float delay) {
         yield return new WaitForSeconds(delay);
     }
@@ -73,29 +83,42 @@ public class K_ReadyToWork : MonoBehaviour
         this.AddWork(delay(d));
     }
 
-    void lerfPosition(Func<Vector3> from, Vector3 to, K_TimeCurve timecurve) {
-        Vector3 f = Vector3.zero;
+    void tweenAnimate<T>(Func<T> getTarget, Action<T, T, float> loop, T to, Func<T> from, K_TimeCurve timecurve = null, float duration = 1f) {
+        timecurve = timecurve ?? K_TimeCurve.Linear(duration);
+        T f = default(T);
         this.AddWork(x => f = from());
         this.AddLoopWork(
             x => {
-                timecurve.Progress();
-                x.transform.position = Vector3.Lerp(f, to, timecurve.Eval);},
-            x => to != x.transform.position);
+            timecurve.Progress();
+            loop(f, to, timecurve.Eval);},
+            x => !EqualityComparer<T>.Default.Equals(to, getTarget()));
     }
-    
-    public void LerfPosition(Vector3 to, float duration) {
-        lerfPosition(() => this.transform.position, to, K_TimeCurve.Linear(duration));
-    }
-
-    public void LerfPosition(Vector3 to, K_TimeCurve timecurve) {
-        lerfPosition(() => this.transform.position, to, timecurve);
-    }
-
-    public void LerfPosition(Vector3 from, Vector3 to, K_TimeCurve timecurve) {
-        lerfPosition(() => from, to, timecurve);
+    void tweenAnimate<T>(Func<T> getTarget, Action<T, T, float> loop, T to, T? from, K_TimeCurve timecurve = null, float duration = 1f) where T : struct {
+        Func<T> f;
+        if (from.HasValue)
+            f = () => (T)from;
+        else 
+            f = () => getTarget();
+        this.tweenAnimate<T>(getTarget, loop, to, f, timecurve, duration);
     }
 
-    IEnumerator lerfScale(Func<Vector3> from, Vector3 to, K_TimeCurve timecurve) {
+    void lerpPosition(Transform target, Vector3 to, Vector3? from = null, K_TimeCurve timecurve = null, float duration = 1f) {
+        this.tweenAnimate<Vector3>(() => target.position, (f, t, p) => target.position = Vector3.Lerp(f, t, p), to, from, timecurve, duration);
+    }
+
+    public void LerpPosition(Transform target, Vector3 from, Vector3 to, K_TimeCurve timecurve = null, float duration = 1f) {
+        lerpPosition(target, to, from: from, timecurve: timecurve, duration: duration);
+    }
+
+    public void LerpPosition(Vector3 to, K_TimeCurve timecurve = null, float duration = 1f) {
+        lerpPosition(this.transform, to, timecurve: timecurve, duration: duration);
+    }
+
+    public void LerpPosition(Vector3 from, Vector3 to, K_TimeCurve timecurve = null, float duration = 1f) {
+        lerpPosition(this.transform, to, from, timecurve: timecurve, duration: duration);
+    }
+
+    IEnumerator lerpScale(Func<Vector3> from, Vector3 to, K_TimeCurve timecurve) {
         Vector3 f = from();
         while (to != this.transform.localScale) {
             timecurve.Progress();
@@ -104,36 +127,32 @@ public class K_ReadyToWork : MonoBehaviour
         }
     }
 
-    public void LerfScale(Vector3 to, float duration) {
-        this.AddWork(lerfScale(() => this.transform.localScale, to, K_TimeCurve.Linear(duration)));
+    public void LerpScale(Vector3 to, float duration) {
+        this.AddWork(lerpScale(() => this.transform.localScale, to, K_TimeCurve.Linear(duration)));
     }
 
-    public void LerfScale(Vector3 to, K_TimeCurve timecurve) {
-        this.AddWork(lerfScale(() => this.transform.localScale, to, timecurve));
+    public void LerpScale(Vector3 to, K_TimeCurve timecurve) {
+        this.AddWork(lerpScale(() => this.transform.localScale, to, timecurve));
     }
 
-    public void LerfScale(Vector3 from, Vector3 to, K_TimeCurve timecurve) {
-        this.AddWork(lerfScale(() => from, to, timecurve));
+    public void LerpScale(Vector3 from, Vector3 to, K_TimeCurve timecurve) {
+        this.AddWork(lerpScale(() => from, to, timecurve));
     }
 
-    IEnumerator lerfColor(Func<Color> from, Color to, K_TimeCurve timecurve) {
-        Color f = this.transform.renderer.material.color;
-        while (to != this.transform.renderer.material.color) {
-            timecurve.Progress();
-            this.transform.renderer.material.color = Color.Lerp(f, to, timecurve.Eval);
-            yield return null;
-        }
+    void lerpColor(Material target, Color to, Color? from = null, K_TimeCurve timecurve = null, float duration = 1f) {
+        this.tweenAnimate<Color>(() => target.color, (f, t, p) => target.color = Color.Lerp(f, t, p), to, from, timecurve, duration);
     }
 
-    public void LerfColor(Color to, float duration) {
-        this.AddWork(lerfColor(() => this.renderer.material.color, to, K_TimeCurve.Linear(duration)));
+    public void LerpColor(Color to, K_TimeCurve timecurve = null, float duration = 1f) {
+        lerpColor(this.renderer.material, to, timecurve: timecurve, duration: duration);
     }
 
-    public void LerfColor(Color to, K_TimeCurve timecurve) {
-        this.AddWork(lerfColor(() => this.renderer.material.color, to, timecurve));
+    public void LerpColor(Material target, Color to, K_TimeCurve timecurve = null, float duration = 1f) {
+        lerpColor(target, to, timecurve: timecurve, duration: duration);
     }
 
-    public void LerfColor(Color from, Color to, K_TimeCurve timecurve) {
-        this.AddWork(lerfColor(() => from, to, timecurve));
+    public void LerpColor(Material target, Color to, float duration = 1f) {
+        lerpColor(target, to, duration: duration);
     }
+    
 }

@@ -63,13 +63,13 @@ public class K_DeckScript : Singleton<K_DeckScript>
             x.RTW.Delay(0.4f);
             K_OnStage.Out(x.gameObject);
             x.transform.SetXY(deckPosition);});
-        RTW.LerfPosition(deckPosition.V3(this.transform.position), K_TimeCurve.EaseOut(0.4f));
+        RTW.LerpPosition(deckPosition.V3(this.transform.position), K_TimeCurve.EaseOut(0.4f));
         RTW.Play();
     }
 
     void showNextCard(){
         K_ReadyToWork rtw = cards.First().RTW;
-        rtw.LerfPosition(new Vector3(nextCardPosition.x, nextCardPosition.y, rtw.transform.position.z), K_TimeCurve.EaseInOut(0.4f));
+        rtw.LerpPosition(new Vector3(nextCardPosition.x, nextCardPosition.y, rtw.transform.position.z), K_TimeCurve.EaseInOut(0.4f));
         rtw.Play();
     }
 

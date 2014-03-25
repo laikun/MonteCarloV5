@@ -12,9 +12,9 @@ public class K_SandBox : MonoBehaviour
         mp = transform.GetOrAddComponent<K_ReadyToWork>();
 
         mp.Delay(1f);
-        mp.LerfPosition(new Vector3(5f,5f, 0f), 1f);
+        mp.LerpColor(Color.red);
         mp.Delay(0.5f);
-        mp.LerfPosition(new Vector3(5f, 0f, 0f), 1f);
+        mp.LerpColor(Color.blue);
         mp.Play();
     }
 }

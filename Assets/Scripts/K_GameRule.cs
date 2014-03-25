@@ -183,7 +183,9 @@ public class K_GameRule : Singleton<K_GameRule>
                 ui.onHover = null;
                 ui.onPress = null;
 
-//                card.GetComponentInChildren<UIButton>().enabled = false;
+                ui.onHover += (x, b) => {
+                    x.SendMessage(b ? "hover" : "hoverout");
+                };
             });
 
             score.Add(1);

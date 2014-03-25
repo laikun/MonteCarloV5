@@ -49,23 +49,23 @@ public class K_PlayingCard : MonoBehaviour
     ////////////////////////////////////////////////
 
     void select(){
-        RTW.LerfScale(new Vector3(ScaleN * 0.9f, ScaleN * 0.9f, 1f), K_TimeCurve.EaseOut(0.05f));
-        RTW.LerfScale(new Vector3(ScaleN * 1.1f, ScaleN * 1.1f, 1f), K_TimeCurve.EaseOut(0.1f));
+        RTW.LerpScale(new Vector3(ScaleN * 0.9f, ScaleN * 0.9f, 1f), K_TimeCurve.EaseOut(0.05f));
+        RTW.LerpScale(new Vector3(ScaleN * 1.1f, ScaleN * 1.1f, 1f), K_TimeCurve.EaseOut(0.1f));
         RTW.Play();
     }
 
     void unselect(){
-        RTW.LerfScale(new Vector3(ScaleN, ScaleN, 1f), K_TimeCurve.EaseOut(0.05f));
+        RTW.LerpScale(new Vector3(ScaleN, ScaleN, 1f), K_TimeCurve.EaseOut(0.05f));
         RTW.Play();
     }
 
     void hover(){
-        RTW.LerfColor(this.HoverColor, 0.5f);
+        RTW.LerpColor(GetComponentInChildren<SpriteRenderer>().renderer.material, this.HoverColor, 0.5f);
         RTW.Play();
     }
 
     void hoverout(){
-        RTW.LerfColor(Color.white, 0.1f);
+        RTW.LerpColor(GetComponentInChildren<SpriteRenderer>().renderer.material, Color.white, 0.5f);
         RTW.Play();
     }
 }
