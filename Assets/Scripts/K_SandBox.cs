@@ -10,11 +10,12 @@ public class K_SandBox : MonoBehaviour
     void Start()
     {
         mp = transform.GetOrAddComponent<K_ReadyToWork>();
-
         mp.Delay(1f);
-        mp.LerpColor(Color.red);
-        mp.Delay(0.5f);
-        mp.LerpColor(Color.blue);
-        mp.Play();
+        mp.LerpAlpha(this.renderer.material, 0f, 1f);
+        mp.GoWork();
+        
     }
+
+
+
 }

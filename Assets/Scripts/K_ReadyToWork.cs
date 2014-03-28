@@ -3,44 +3,70 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+
 public class K_ReadyToWork : MonoBehaviour
 {
     public static Dictionary<string, K_ReadyToWork> All = new Dictionary<string, K_ReadyToWork>();
 
+    static bool noIntercept;
+    public bool NoIntercept { get { return noIntercept; } set { noIntercept = value; } }
+    public bool IsWorking { get; private set; }
+    public bool IsWorkDone { get {return !this.IsWorking && this.Works.Count == 0;} }
+
+    delegate IEnumerator Work();
+    Queue<Work> Works = new Queue<Work>();
+    
+    public void MoreWork(IEnumerator act) {
+        this.Works.Enqueue(() => act);
+    }    
+    
     void Awake() {
         All.Add(this.name, this);
     }
 
-    delegate IEnumerator Work();
-
-    Queue<Work> Works = new Queue<Work>();
-
-    public bool IsPlaying { get; private set; }
-
-    public bool IsWorkDone {
-        get { 
-            if (!this.IsPlaying && this.Works.Count == 0)
-                Debug.Log("WORK DONE");
-            return !this.IsPlaying && this.Works.Count == 0;}
-    }
-
-    public void Play() {
-        if (!IsPlaying)
+    public void GoWork() {
+        if (noIntercept && !IsWorking)
+            StartCoroutine("Waiting");
+        if (!IsWorking)
             StartCoroutine("WorkDo");
     }
 
+    public void ForceWork() {
+        StartCoroutine("WorkDo");
+    }
+
+    IEnumerator Waiting() {
+        Debug.Log("WAIT!!");
+        while (noIntercept) {
+            yield return new WaitForFixedUpdate();
+        }
+        StartCoroutine("WorkDo");
+    }
+
     public void Stop() {
-        if (IsPlaying)
+        if (IsWorking)
             StopCoroutine("WorkDo");
     }
 
+    public void ForceStop(){
+        StopCoroutine("WorkDo");
+        this.Works.Clear();
+        this.IsWorking = false;
+    }
+
+    public void WorkGone(){
+        StopCoroutine("WorkDo");
+        this.Works.Clear();
+    }
+
     IEnumerator WorkDo() {
-        this.IsPlaying = true;
-        while (Works.Count > 0) {
-            Work work = Works.Dequeue();
+        this.IsWorking = true;
+        while (this.Works.Count > 0) {
+            Work work = this.Works.Dequeue();
             yield return StartCoroutine(work());
         }
-        this.IsPlaying = false;
+        this.IsWorking = false;
+        noIntercept = false;
     }
 
     IEnumerator monoWork(Action<K_ReadyToWork> work) {
@@ -55,21 +81,17 @@ public class K_ReadyToWork : MonoBehaviour
         }
     }
     
-    public void AddWork(IEnumerator act) {
-        this.Works.Enqueue(() => act);
+    public void MoreWork(Action<K_ReadyToWork> work) {
+        this.MoreWork(monoWork(work));
     }
 
-    public void AddWork(Action<K_ReadyToWork> work) {
-        this.AddWork(monoWork(work));
+    public void DelayWork(Func<K_ReadyToWork, bool> delayFlag, Action<K_ReadyToWork> work) {
+        this.MoreLoopWork(x => {}, delayFlag);
+        this.MoreWork(work);
     }
 
-    public void AddDelayWork(Func<K_ReadyToWork, bool> delayFlag, Action<K_ReadyToWork> work) {
-        this.AddLoopWork(x => {}, delayFlag);
-        this.AddWork(work);
-    }
-
-    public void AddLoopWork(Action<K_ReadyToWork> work, Func<K_ReadyToWork, bool> flag) {
-        this.AddWork(loopWork(work, flag));
+    public void MoreLoopWork(Action<K_ReadyToWork> work, Func<K_ReadyToWork, bool> flag) {
+        this.MoreWork(loopWork(work, flag));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -80,25 +102,35 @@ public class K_ReadyToWork : MonoBehaviour
     }
 
     public void Delay(float d) {
-        this.AddWork(delay(d));
+        this.MoreWork(delay(d));
+    }
+
+    IEnumerator rest(){
+        StopCoroutine("WorkDo");
+        yield break;
+    }
+
+    public void Rest(){
+        this.MoreWork(x => rest());
     }
 
     void tweenAnimate<T>(Func<T> getTarget, Action<T, T, float> loop, T to, Func<T> from, K_TimeCurve timecurve = null, float duration = 1f) {
         timecurve = timecurve ?? K_TimeCurve.Linear(duration);
         T f = default(T);
-        this.AddWork(x => f = from());
-        this.AddLoopWork(
+        this.MoreWork(x => f = from());
+        this.MoreLoopWork(
             x => {
             timecurve.Progress();
             loop(f, to, timecurve.Eval);},
             x => !EqualityComparer<T>.Default.Equals(to, getTarget()));
     }
+
     void tweenAnimate<T>(Func<T> getTarget, Action<T, T, float> loop, T to, T? from, K_TimeCurve timecurve = null, float duration = 1f) where T : struct {
         Func<T> f;
         if (from.HasValue)
             f = () => (T)from;
         else 
-            f = () => getTarget();
+            f = getTarget;
         this.tweenAnimate<T>(getTarget, loop, to, f, timecurve, duration);
     }
 
@@ -128,31 +160,55 @@ public class K_ReadyToWork : MonoBehaviour
     }
 
     public void LerpScale(Vector3 to, float duration) {
-        this.AddWork(lerpScale(() => this.transform.localScale, to, K_TimeCurve.Linear(duration)));
+        this.MoreWork(lerpScale(() => this.transform.localScale, to, K_TimeCurve.Linear(duration)));
     }
 
     public void LerpScale(Vector3 to, K_TimeCurve timecurve) {
-        this.AddWork(lerpScale(() => this.transform.localScale, to, timecurve));
+        this.MoreWork(lerpScale(() => this.transform.localScale, to, timecurve));
     }
 
     public void LerpScale(Vector3 from, Vector3 to, K_TimeCurve timecurve) {
-        this.AddWork(lerpScale(() => from, to, timecurve));
+        this.MoreWork(lerpScale(() => from, to, timecurve));
     }
 
     void lerpColor(Material target, Color to, Color? from = null, K_TimeCurve timecurve = null, float duration = 1f) {
         this.tweenAnimate<Color>(() => target.color, (f, t, p) => target.color = Color.Lerp(f, t, p), to, from, timecurve, duration);
     }
 
-    public void LerpColor(Color to, K_TimeCurve timecurve = null, float duration = 1f) {
-        lerpColor(this.renderer.material, to, timecurve: timecurve, duration: duration);
-    }
-
     public void LerpColor(Material target, Color to, K_TimeCurve timecurve = null, float duration = 1f) {
         lerpColor(target, to, timecurve: timecurve, duration: duration);
     }
 
-    public void LerpColor(Material target, Color to, float duration = 1f) {
+    public void LerpColor(Material target, Color to, float duration = 1f) { 
         lerpColor(target, to, duration: duration);
     }
     
+    public void LerpColor(Color from, Color to, float duration = 1f) {
+        lerpColor(this.renderer.material, to, from, duration: duration);
+    }
+    
+    public void LerpColor(Color to, float duration = 1f) {
+        lerpColor(this.renderer.material, to, duration: duration);
+    }
+
+    void lerpAlpha(Material target, float to, float? from = null, K_TimeCurve timecurve = null, float duration = 1f) {
+        Color f = target.color;
+        Color t = target.color;
+        f.a = from.HasValue ? (float)from : f.a;
+        target.color = f;
+        t.a = to;
+        this.lerpColor(target, t, f, timecurve, duration);
+    }
+
+    public void LerpAlpha(Material target, float from, float to, K_TimeCurve timecurve = null, float duration = 1f) {
+        this.lerpAlpha(target, to, from, timecurve, duration);
+    }
+    
+    public void LerpAlpha(float from, float to, K_TimeCurve timecurve = null, float duration = 1f) {
+        this.lerpAlpha(this.renderer.material, to, from, timecurve, duration);
+    }
+
+    public void LerpAlpha(float to, K_TimeCurve timecurve = null, float duration = 1f) {
+        this.lerpAlpha(this.renderer.material, to, timecurve: timecurve, duration: duration);
+    }
 }

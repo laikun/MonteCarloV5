@@ -104,7 +104,7 @@ public class K_GameRule : Singleton<K_GameRule>
             uicamera.enabled = true;
             ReGame();
             //
-            UIEventListener.Get(go).ResetEventListener();
+            UIEventListener.Get(go).Init();
             go.SetActive(false);
         };
     }
@@ -177,15 +177,8 @@ public class K_GameRule : Singleton<K_GameRule>
             foundation.Founding(foundingCards);
 
             Array.ForEach(foundingCards, card => {
-                UIEventListener ui = UIEventListener.Get(card.gameObject);
-                ui.onClick = null;
-                ui.onSelect = null;
-                ui.onHover = null;
-                ui.onPress = null;
-
-                ui.onHover += (x, b) => {
-                    x.SendMessage(b ? "hover" : "hoverout");
-                };
+                UIEventListener ui = UIEventListener.Get(card.gameObject).Init();
+                ui.onHover += (x, b) => card.SendMessage(b ? "hover" : "hoverout");
             });
 
             score.Add(1);
@@ -215,7 +208,7 @@ public class K_GameRule : Singleton<K_GameRule>
                 card.SendMessage("unselect");
 
                 UIEventListener ui = UIEventListener.Get(card.gameObject);
-                ui.ResetEventListener();
+                ui.Init();
 
                 ui.onSelect += (x, b) => {
                     if (!b)
@@ -224,6 +217,7 @@ public class K_GameRule : Singleton<K_GameRule>
                     founding();
                 };
 
+                ui.onHover += (x, b) => card.SendMessage(b ? "hover" : "hoverout");
             });
 
             TriggerRe.SetActive(true);
@@ -231,8 +225,8 @@ public class K_GameRule : Singleton<K_GameRule>
 
         deck.SendMessage("onDeckPosition");
         K_ReadyToWork rtw = K_ReadyToWork.All ["Deck"];
-        monoWork.AddDelayWork(x => rtw.IsWorkDone, x => draw());
-        monoWork.Play();
+        monoWork.DelayWork(x => rtw.IsWorkDone, x => draw());
+        monoWork.GoWork();
     }
 
     public void ReGame() {
@@ -241,19 +235,16 @@ public class K_GameRule : Singleton<K_GameRule>
         Jumbotron.SetActive(false);
         TriggerRe.SetActive(false);
 
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<UIEventListener>().ResetEventListener());
+        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<UIEventListener>().Init());
 
-        present.ReGame(() => {
-            uicamera.enabled = true;
-            TriggerGo.SetActive(true);
-            deck.ReInit(cardManager.Cards);
-        });
+        deck.SendMessage("shuffle", new K_PlayingCard[]{}.Concat(foundation.Cards).Concat(cell.Cards).ToArray());
 
         // Sync Problem?
         cell.ClearAll();
         foundation.Clear();
         score.Reset();
         timeLimit.Reset();
+
     }
 
     public void End() {

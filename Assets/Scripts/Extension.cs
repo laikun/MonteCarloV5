@@ -68,7 +68,7 @@ namespace Extensions
             return result;
         }
 
-        public static void ResetEventListener(this UIEventListener ui) {
+        public static UIEventListener Init(this UIEventListener ui) {
             ui.onSubmit = null;
             ui.onClick = null;
             ui.onDoubleClick = null;
@@ -79,7 +79,8 @@ namespace Extensions
             ui.onDrag = null;
             ui.onDrop = null;
             ui.onKey = null;
-//            ui.onInput = null;
+
+            return ui;
         }
 
         public static Vector2 GetXY(this Transform transform) {

@@ -58,7 +58,7 @@ public class K_Cell : Singleton<K_Cell>
             cells [i].position = new Vector2(px [(int)cells [i].coordination.x], py [(int)cells [i].coordination.y]);
         }
 
-        cellInX = K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale;
+        cellInX = K_GameOptions.Instance.screenSize.x / 2;
     }
 
     public void DrawToCell(K_PlayingCard[] cards) {
@@ -97,17 +97,18 @@ public class K_Cell : Singleton<K_Cell>
     }
 
     void CellIn() {
-        int idx = 0;
+//        int idx = 0;
         foreach (K_PlayingCard card in Cards.Reverse()) {
             Cell cell = Array.Find(cells, c => card.Equals(c.card));
             if (cell.position == card.transform.GetXY())
                 continue;
 
-            card.RTW.Delay(0.05f * idx++);
-            card.RTW.AddWork(x => K_OnStage.In(x));
+            card.RTW.MoreWork(x => K_OnStage.In(x));
+            card.RTW.Delay(0.05f * cell.position.y);
             if (card.transform.position.y != cell.position.y) {
                 card.RTW.LerpPosition(new Vector3(-cellInX, card.transform.position.y, card.transform.position.z), 
                                            K_TimeCurve.EaseIn(0.1f * Vector2.Distance(new Vector2(-cellInX, cell.position.y), card.transform.position)));
+//                card.RTW.Delay(0.2f * cell.position.y);
                 card.RTW.LerpPosition(new Vector3(cellInX, cell.position.y, card.transform.position.z),
                                            cell.position.V3(card),
                                            K_TimeCurve.EaseOut(0.1f * Vector2.Distance(new Vector2(cellInX, cell.position.y), cell.position)));
@@ -115,7 +116,7 @@ public class K_Cell : Singleton<K_Cell>
                 float d = Vector2.Distance(cell.position, card.transform.position);
                 card.RTW.LerpPosition(cell.position.V3(card), K_TimeCurve.EaseInOut(0.1f * d));
             }
-            card.RTW.Play();
+            card.RTW.GoWork();
         }
     }
 }
