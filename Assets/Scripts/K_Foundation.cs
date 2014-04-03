@@ -36,10 +36,10 @@ public class K_Foundation : Singleton<K_Foundation>
         {
             foundations [i] = new Foundation();
             foundations [i].card = null;
-            foundations [i].position = new Vector2((2 * i + 1) * unitx / 2 - this.transform.localScale.x / 2 - Math.Abs(this.transform.localScale.x), this.transform.localScale.y);
+            foundations [i].position = new Vector2((2 * i + 1) * unitx / 2 - this.transform.localScale.x / 2 - Math.Abs(this.transform.position.x), this.transform.position.y);
         }
 
-        FoundInPosition = new Vector3(K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale, this.transform.localScale.y);
+        FoundInPosition = new Vector3(K_GameOptions.Instance.screenSize.x / 2 + size.x * Scale, this.transform.position.y);
     }
 
     public void Founding(K_PlayingCard[] cards)
@@ -55,23 +55,20 @@ public class K_Foundation : Singleton<K_Foundation>
 
     void FoundIn(K_PlayingCard[] cards)
     {
-        cards = cards.OrderBy(card => card.transform.localScale.x).ToArray();
-
+        cards = cards.OrderBy(card => card.transform.position.x).ToArray();
+        int dly = 0;
         foreach (K_PlayingCard card in cards)
         {
             card.GetComponentInChildren<SpriteRenderer>().sortingOrder = Array.FindIndex(foundations, x => x.card.Equals(card));
-            TweenPosition tp = TweenPosition.Begin(card.gameObject, 0.3f, new Vector3(-K_GameOptions.Instance.screenSize.x, card.transform.localScale.y, card.transform.localScale.z));
-            tp.delay = K_Time.Instance.NextDelayTime(0.04f);
-            tp.method = UITweener.Method.EaseIn;
-            tp.PlayForward();
-            tp.onFinished.Add(new EventDelegate(() => {
-                K_PlayingCard kc = UITweener.current.GetComponentInChildren<K_PlayingCard>();
-                kc.transform.SetScale(this.Scale);
-                kc.transform.SetXY(this.FoundInPosition);
-                tp.method = UITweener.Method.EaseOut;
-                tp = TweenPosition.Begin(kc.gameObject, 0.4f, this.Position(kc));
-                tp.PlayForward();
-            }));
+            card.GetComponent<UIEventListener>().Init();
+            card.RTW.Delay(0.04f * dly++);
+            card.RTW.LerpPosition(new Vector3(-K_GameOptions.Instance.screenSize.x, card.transform.position.y, card.transform.position.z), K_TimeCurve.EaseIn(0.3f));
+            card.RTW.MoreWork(x => {
+                x.transform.SetScale(this.Scale);
+                x.transform.SetXY(this.FoundInPosition);
+            });
+            card.RTW.LerpPosition(this.Position(card), K_TimeCurve.EaseOut(0.4f));
+            card.RTW.GoWork();
         }
     }
 }

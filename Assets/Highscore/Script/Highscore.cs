@@ -9,7 +9,7 @@ public class Highscore : MonoBehaviour
 	public string PostScoreUrl = "http://YouWebsite.com/.../postScore.php?";
 	public string GetHighscoreUrl = "http://YouWebsite.com/.../getHighscore.php";
 
-	private string name = "Name";
+	private string nname = "Name";
 	private string score = "Score";
 	private string WindowTitel = "";
 	private string Score = "";
@@ -92,13 +92,13 @@ public class Highscore : MonoBehaviour
 		
 		windowRect = GUI.Window(0, windowRect, DoMyWindow, WindowTitel);
 	
-		name = GUI.TextField (new Rect (Screen.width / 2 - 160, 10, 100, 20), name, maxNameLength);
+		nname = GUI.TextField (new Rect (Screen.width / 2 - 160, 10, 100, 20), nname, maxNameLength);
     	score = GUI.TextField (new Rect (Screen.width / 2 - 50, 10, 100, 20), score, 25);
 		
     	if (GUI.Button(new Rect(Screen.width / 2 + 60, 10, 90, 20),"Post Score"))
     	{
-			StartCoroutine(PostScore(name, int.Parse(score)));
-       		name = "";
+			StartCoroutine(PostScore(nname, int.Parse(score)));
+       		nname = "";
        		score = "";
     	}    
 	}

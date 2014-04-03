@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Linq;
 using System;
 using System.Collections;
@@ -20,228 +20,227 @@ public class K_GameRule : Singleton<K_GameRule>
     public GameObject TriggerGo;
     public GameObject TriggerRe;
     public GameObject Jumbotron;
-    public K_Time time;
-    Present present;
+    K_ReadyToWork monoWork;
 
-    class Present
-    {
-        K_GameRule rule = K_GameRule.Instance;
-        float scaleN;
-        Vector2 nextCardPosition;
-        Vector2 deckPosition;
-        UICamera input;
+    public double Score;
 
-        public Present()
-        {
-            input = rule.uicamera;
+    public void Ready() {
+        K_OnStage.Init();
+        monoWork = this.GetOrAddComponent<K_ReadyToWork>();
+        if (cardManager.Cards == null)
+            cardManager.CreateCards();
 
-            scaleN = rule.cell.Scale * rule.options.separate;
-
-            deckPosition = rule.cell.LastCellPosition;
-            deckPosition.x += rule.options.separate + rule.cardManager.Size.x * rule.cell.Scale * 1.2f;
-            
-            nextCardPosition = new Vector2(deckPosition.x - rule.cardManager.Size.x * rule.cell.Scale * 0.2f, deckPosition.y);
-        }
-
-        private void inputAllow(bool on)
-        {
-            input.enabled = on;
-            Debug.Log("Allow Input : " + on);
-        }
-
-        public void SelectCard(K_PlayingCard card)
-        {
-//            K_PresentDeck pa = K_PresentDeck.Ready(card);
-//            pa.QuickScale(new Vector3(rule.cell.Scale - scaleN, rule.cell.Scale - scaleN, 1f)).Duration = 0.05f;
-//            pa.Next<Vector3>(new Vector3(rule.cell.Scale + scaleN, rule.cell.Scale + scaleN, 1f)).Duration = 0.1f;
-        }
-
-        public void UnSelectCard(K_PlayingCard card)
-        {
-
-            TweenScale.Begin(card.gameObject, 0.1f, new Vector2(rule.cell.Scale, rule.cell.Scale)).PlayForward();
-        }
-
-        public void ShowNextCard()
-        {
-            TweenPosition.Begin(rule.deck.Cards.Length > 0 ? rule.deck.Cards.First().gameObject : rule.deck.gameObject, 0.4f, nextCardPosition).PlayForward();
-        }
-
-        public void OnDeckPosition(Action afterAction)
-        {
-            Debug.Log(deckPosition);
-            inputAllow(false);
-            Array.ForEach(rule.cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
-
-            TweenPosition tw = TweenPosition.Begin(rule.deck.gameObject, 0.4f, new Vector3(deckPosition.x, deckPosition.y));
-            tw.method = UITweener.Method.EaseOut;        
-            tw.onFinished.Add(new EventDelegate(() => {
-                foreach (K_PlayingCard card in rule.cardManager.Cards)
-                {
-                    card.transform.localScale = deckPosition;
-                    card.GetOrAddComponent<K_OnStage>().InStage();
-                }
-                afterAction();
-            }));
-            tw.PlayForward();
-        }
-
-        public void ReGame(Action action)
-        {
-            inputAllow(false);
-
-            Array.ForEach(rule.deck.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
-            List<K_PlayingCard> temp = new List<K_PlayingCard>(rule.cardManager.Cards.Length);
-            temp.AddRange(rule.cell.Cards.Reverse());
-            temp.AddRange(rule.foundation.Cards.Reverse());
-
-            // imaiti...
-            temp.ForEach(card => card.transform.SetScale(rule.cell.Scale));
-
-            TweenPosition tw = TweenPosition.Begin(rule.deck.gameObject, 0.3f, Vector3.zero);
-            tw.method = UITweener.Method.EaseOut;
-            tw.onFinished.Add(new EventDelegate(() => {
-                foreach (K_PlayingCard card in temp)
-                {
-                    TweenPosition tp = TweenPosition.Begin(card.gameObject, 0.5f, Vector3.zero);
-                    tp.delay = rule.time.NextDelayTime(0.03f);
-                    tp.PlayForward();
-                }
-            }));            
-
-            temp.Last().GetComponentInChildren<TweenPosition>().onFinished.Add(new EventDelegate(() => {
-                inputAllow(true);
-                Array.ForEach(rule.cardManager.Cards, card => {
-                    card.transform.localScale = Vector2.zero;
-                    card.gameObject.SetActive(true);
-                    card.GetOrAddComponent<K_OnStage>().InStage();
-                });
-                rule.cardManager.GetOrAddComponent<K_OnStage>().InStage();
-                action();
-            }));
-        }
-    }
-
-    public void Ready()
-    {
-        cardManager.CreateCards();
         foundation.Init(cardManager.Size, cardManager.Cards.Length);
         cell.Init(options.GetOptValue("Column"), options.GetOptValue("Row"), cardManager.Size, options.separate);
-        deck.transform.localScale = new Vector2(cell.Scale, cell.Scale);
-        deck.Init(cardManager.Cards);
 
-        present = new Present();
+        Vector2 deckPosition = cell.LastCellPosition;
+        deckPosition.x += options.separate + cardManager.Size.x * cell.Scale * 1.2f;
+
+        deck.transform.SetScale(cell.Scale);
+        deck.Init(cardManager.Cards, deckPosition);
 
         TriggerRe.SetActive(false);
         TriggerGo.SetActive(true);
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().InStage());
 
-        timeLimit.Init(options.GetOptValue("TimeLimit"), () => GameOver("TIME OVER"));
-        turnLimit.Init(options.GetOptValue("TurnLimit"), () => GameOver("TURN OVER"));
-        hintLimit.Init(options.GetOptValue("Hint"), () => hintLimit.gameObject.SetActive(false));
+        UIEventListener.Get(TriggerGo).onClick += x => {
+            this.Play();
+            K_Flag.OnFlag("ReadyToStart", false);
+        };        
+
+        UIEventListener.Get(TriggerGo).onHover += (x, b) => {
+            TweenColor.Begin(TriggerGo, 0.4f, b ? Color.red : Color.white).PlayForward();
+        };        
+        
+        K_Flag.ConnectFlag("ReadyToStart", b => {
+            TweenColor.Begin(TriggerGo, 0.1f, Color.white).PlayForward();
+            TriggerGo.SetActive(b);
+        });
+
+        K_Flag.ConnectFlag("AllowReGame", b => {
+            TriggerRe.SetActive(b);
+        });
+
+        K_Flag.ConnectFlag("ViewInfo", b => {
+            Jumbotron.collider.enabled = b;
+            Jumbotron.GetComponentInChildren<UILabel>().text = "";
+        });
+
+        UIEventListener.Get(TriggerGo).onClick += x => {
+            this.Play();
+            K_Flag.OnFlag("ReadyToStart", false);
+        };
+
+//        timeLimit.Init(options.GetOptValue("TimeLimit"), () => GameOver("TIME OVER"));
+//        turnLimit.Init(options.GetOptValue("TurnLimit"), () => GameOver("TURN OVER"));
+//        hintLimit.Init(options.GetOptValue("Hint"), () => hintLimit.gameObject.SetActive(false));
     }
 
-    public void GameOver(string str)
-    {
-        uicamera.enabled = false;
+    public void GameOver(string str) {
         Jumbotron.SetActive(true);
+        Jumbotron.collider.enabled = true;
         Jumbotron.GetComponentInChildren<UILabel>().text = str;
         UIEventListener.Get(Jumbotron.gameObject).onClick += go => {
-            uicamera.enabled = true;
             ReGame();
             //
-            UIEventListener.Get(go).ResetEventListener();
-            go.SetActive(false);
+            UIEventListener.Get(go).Init();
+            go.collider.enabled = false;
         };
     }
 
-    public void Play()
-    {
+    public void Play() {
         Action draw = () => {};
+        // left cards in cell
+        Func<K_PlayingCard[]> findCombination = () => {return null;};
+        // Founding card
+        Action founding = () => {};
+        // Select Card
+        Action<K_PlayingCard> select = x => {};        
+        Action selectReset = () => {};
+        List<K_PlayingCard> selectedCards = new List<K_PlayingCard>();
 
-        TriggerGo.gameObject.SetActive(false);
+//        K_Flag.OnFlag("InPlay", true);
 
         bool autoDraw = options.GetOptValue("AutoDraw") != 0 ? true : false;
 
-        Func<K_PlayingCard[]> hit = () => {
-            // left cards in cell
-            List<K_PlayingCard> cards = new List<K_PlayingCard>(cell.Cards);
-            return cards.Where((card, index) => 
-                                               cards.Where((beta) => 
-                        !beta.Equals(card) && beta.PairNumber(card) && cell.IsNeighbor(new K_PlayingCard[]
-            {
-                card,
-                beta
-            })).Count() > 0).ToArray();
-        };
+        if (!autoDraw)
+            UIEventListener.Get(deck.gameObject).onClick += x => draw();
+
+        deck.SendMessage("onDeckPosition");
+        K_ReadyToWork rtw = K_ReadyToWork.All ["Deck"];
+        monoWork.DelayWork(x => rtw.IsWorkDone, x => draw());
+        monoWork.GoWork();
 
         UIEventListener.Get(hintLimit.gameObject).onClick += go => {
-            Array.ForEach(hit(), card => present.SelectCard(card));
+            Array.ForEach(findCombination(), card => card.SendMessage("select"));
             hintLimit.Down(-1);
         };
 
-        // Check Selected Cards
-        List<K_PlayingCard> selected = new List<K_PlayingCard>();
+        findCombination = () => {
+            Dictionary<K_PlayingCard[], string> hit = new Dictionary<K_PlayingCard[], string>();
 
-        Action<K_PlayingCard> select = card => {
-            if (selected.Count > 0 && selected.Last().Equals(card))
-            {
-                selected.RemoveAll(x => x.Equals(card));
-                present.UnSelectCard(card);
-            } else
-            {
-                selected.Add(card);
-                present.SelectCard(card);
+            Action<K_PlayingCard[]> linear;
+            linear = z => {
+                z = z.OrderBy(x => x.Number).OrderBy(x => x.Suit).ToArray();
+                string rank = cardManager.Rank(z);
+                if (!string.IsNullOrEmpty(rank) && hit.Keys.Where(x => x.SequenceEqual(z)).Count() == 0)
+                    hit.Add(z, rank);
+                foreach(K_PlayingCard y in cell.InLinearCards(z)) {
+                    K_PlayingCard[] temp = z.Concat(new K_PlayingCard[]{y}).ToArray();
+                    linear(temp);
+                }
+            };
+
+            Array.ForEach(cell.Cards, x => linear(new K_PlayingCard[]{x}));
+
+            if (hit.Count < 1)
+                return null;
+
+            Debug.Log("////////////////////////////////////////////");
+            foreach( KeyValuePair<K_PlayingCard[], string> x in hit )            {
+                Debug.Log("RANK : " + x.Value + " = CARDS : " + x.Key.ToList().ToString<K_PlayingCard>());
             }
+            Debug.Log("////////////////////////////////////////////");
+
+            return hit.First().Key;
         };
+        
+        select = card => {
 
-        Action reSelection = () => {
-            if (selected.Count < 1)
-                return;
-            selected.Where(card => !card.Equals(selected.Last())).ToList().ForEach(card => present.UnSelectCard(card));
-            selected = new List<K_PlayingCard>(new K_PlayingCard[]{selected.Last()});
-        };
-
-        Func<bool> checkSelected = () => {
-            if (selected.Count < 2)
-                return false;
-
-            if (!cell.IsNeighbor(selected.ToArray()) || 1 != selected.GroupBy(card => card.Number).Count())
-            {
-                reSelection();
-                return false;
-            }
-
-            return true;
-        };
-
-        // Founding card
-        Action founding = () => {
-            if (!checkSelected())
+            if (card == null)
                 return;
 
-            K_PlayingCard[] foundingCards = selected.ToArray();
-            selected.Clear();
-            cell.Clear(foundingCards);
+            if (selectedCards.Count > 0 && selectedCards.Last().Equals(card))
+                return;
 
-            foundation.Founding(foundingCards);
+            card.SendMessage("select");
 
-            Array.ForEach(foundingCards, card => {
-                UIEventListener ui = UIEventListener.Get(card.gameObject);
-                ui.onClick = null;
-                ui.onSelect = null;
-                ui.onHover = null;
-                ui.onPress = null;
+            selectedCards.Add(card);
+            K_PlayingCard[] cnslc = cell.InLinearCards(selectedCards.ToArray());
 
-                card.GetComponentInChildren<UIButton>().enabled = false;
+            // No Card In Linear
+            if (cnslc.Length == 0) {
+                founding();
+                return;
+            }
+
+            // Check Rank
+            if (selectedCards.Count > 1) {
+                string tempRank = cardManager.Rank(selectedCards.ToArray());
+
+                if (!string.IsNullOrEmpty(tempRank)) {
+
+                    tempRank = cardManager.Rank(selectedCards.ToArray().Concat(cnslc).ToArray());
+
+                    if (string.IsNullOrEmpty(tempRank)) {
+                        founding();
+                        return;
+                    }
+                }
+            }                
+
+            Array.ForEach(cell.Cards, x => {
+                UIEventListener ui = UIEventListener.Get(x.gameObject).Init();
+                // add select
+                if (selectedCards.Contains(x)) {
+                    x.SendMessage("hover");
+                } else if (cnslc.Contains(x)) {
+                    x.SendMessage("canselect");
+                    ui.onSelect += (a, b) => {
+                        if (b)
+                            select(x);
+                    };          
+                    ui.onHover += (a, b) => card.SendMessage(b ? "hover" : "hoverout");
+                } else {
+                    x.SendMessage("dontselect");
+                    ui.onSelect += (g, b) => {
+                        selectReset();
+                        select(x);
+                    };
+                }
             });
 
-            score.Add(1);
-            if (autoDraw)
-                draw();
         };
 
-        int drawCount = 0;
+        selectReset = () => {
+            selectedCards.Clear();
+            Array.ForEach(cell.Cards, card => {
+                card.SendMessage("canselect");
+                card.SendMessage("unselect");
+                UIEventListener ui = card.GetOrAddComponent<UIEventListener>();
+                ui.Init();                
+                ui.onSelect += (x, b) => {
+                    if (b)
+                        select(card);
+                };                
+                ui.onHover += (x, b) => card.SendMessage(b ? "hover" : "hoverout");
+            });
+        };
+
+        founding = () => {
+            string rank = cardManager.Rank(selectedCards.ToArray());
+            Debug.Log("RANK : " + rank);
+            K_ReadyToWork jrtw = Jumbotron.transform.GetOrAddComponent<K_ReadyToWork>();
+
+            if (string.IsNullOrEmpty(rank)) {
+                Jumbotron.GetComponentInChildren<UILabel>().text = "No Pair";
+            } else {
+                Jumbotron.GetComponentInChildren<UILabel>().text = rank;         
+                selectedCards.ForEach(x => x.SendMessage("hoverout"));
+                foundation.Founding(selectedCards.ToArray());
+                cell.Clear(selectedCards.ToArray());
+
+                score.Add(cardManager.ScoreTable(rank));
+
+                if (autoDraw)
+                    draw();
+            }
+            
+            selectReset();
+
+            jrtw.Delay(0.7f);
+            jrtw.MoreWork(x => Jumbotron.GetComponentInChildren<UILabel>().text = "");
+            jrtw.GoWork();
+        };
 
         // Add Delegate Action To Card In Cell
         draw = () => {
@@ -250,100 +249,45 @@ public class K_GameRule : Singleton<K_GameRule>
             if (cell.BlankCell == 0)
                 return;
 
-            cell.Pack();
-            K_PlayingCard[] cards = new K_PlayingCard[cell.BlankCell];
-            for (int i=0; i<cards.Length; i++)
-            {
-                cards [i] = deck.Draw();
-            }
-            cell.DrawToCell(cards);
-
-            selected.Clear();
+            cell.DrawToCell(deck.Draws(cell.BlankCell));
 
             // Check GameOVer
-            if (hit().Length < 1)
-            {
+            if (findCombination() == null) {
                 GameOver("GAME OVER");
                 return;
             }
 
-            Array.ForEach(cell.Cards, card => {
-                turnLimit.Reset();
-                present.UnSelectCard(card);
-
-                UIEventListener ui = UIEventListener.Get(card.gameObject);
-                ui.ResetEventListener();
-
-                ui.onSelect += (x, b) => {
-                    if (!b)
-                        return;
-                    select(card);
-                    founding();
-                };
-
-//                ui.onHover += (x, b) => {
-//                    if (!b)
-//                        return;
-//                    selected.Add(x.GetComponentInChildren<K_PlayingCard>());
-//                    present.SelectCard(selected.Last());
-//                };
-//
-//                ui.onPress += (x, b) => {
-//                    if (!b)
-//                        foundion();
-//                };
-            });
-
-            cell.Cards.Last().GetComponentInChildren<TweenPosition>().onFinished.Add(new EventDelegate(() => {
-                turnLimit.Down();
-                present.ShowNextCard();
-                uicamera.enabled = true;
-            }));
-
-            TriggerRe.SetActive(true);
+            selectReset();
         };
-
-        present.OnDeckPosition(() => {
-            timeLimit.Down();
-            draw();
-        });
     }
 
-    public void ReGame()
-    {
-        uicamera.enabled = false;
+    public void ReGame() {
+        K_Flag.OnFlag("AllowReGame", false);
+        K_Flag.OnFlag("ViewInfo", false);
+        K_Flag.OnFlag("ReadyToStart", false);
 
-        Jumbotron.SetActive(false);
-        TriggerRe.SetActive(false);
-
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<UIEventListener>().ResetEventListener());
-
-        present.ReGame(() => {
-            uicamera.enabled = true;
-            TriggerGo.SetActive(true);
-            deck.Init(cardManager.Cards);
-        });
-
-        // Sync Problem?
         cell.ClearAll();
         foundation.Clear();
         score.Reset();
         timeLimit.Reset();
+
+        deck.SendMessage("shuffle", cardManager.Cards);
     }
 
-    public void End()
-    {
-        TriggerRe.SetActive(false);
-        TriggerGo.SetActive(false);
-        Jumbotron.SetActive(false);
+    public void End() {
         cell.ClearAll();
         foundation.Clear();
         deck.Clear();
-        deck.GetOrAddComponent<K_OnStage>().OutStage();
-        Array.ForEach(cardManager.Cards, card => card.GetOrAddComponent<K_OnStage>().OutStage());
+        deck.transform.SetXY(Vector2.zero);
+        K_OnStage.Out(deck);
+
+        Array.ForEach(cardManager.Cards, card => K_OnStage.Out(card));
 
         score.Reset();
-        timeLimit.Stop();
+
+        K_Flag.OnFlag("ReadyToStart", false);
+        K_Flag.OnFlag("AllowReGame", false);
+        K_Flag.OnFlag("ViewInfo", false);
     }
 
 }

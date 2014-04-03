@@ -5,6 +5,8 @@ Project("{FEE1D630-5260-39B3-A092-B074ACFAAA25}") = "MonteCarloV5", "Assembly-CS
 EndProject
 Project("{FEE1D630-5260-39B3-A092-B074ACFAAA25}") = "MonteCarloV5", "Assembly-CSharp-Editor.csproj", "{3D25F33A-7E46-FCBA-7A82-4201820D303B}"
 EndProject
+Project("{FEE1D630-5260-39B3-A092-B074ACFAAA25}") = "MonteCarloV5", "Assembly-UnityScript.unityproj", "{4A936ABA-06C3-47C8-E750-6C2660EC3E65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,11 +21,15 @@ Global
 		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D25F33A-7E46-FCBA-7A82-4201820D303B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A936ABA-06C3-47C8-E750-6C2660EC3E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A936ABA-06C3-47C8-E750-6C2660EC3E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A936ABA-06C3-47C8-E750-6C2660EC3E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A936ABA-06C3-47C8-E750-6C2660EC3E65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-					GlobalSection(MonoDevelopProperties) = preSolution
+																																																																			GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Assembly-CSharp.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
