@@ -8,18 +8,6 @@ using System.Reflection;
 
 namespace Extensions
 {
-    public enum GameState {
-        title,
-        Awake,
-        Ready,
-        Begin,
-        Playing,
-        Wait,
-        Pause,
-        Over,
-        Clear
-    }
-
     public class Closure
     {
         object value;
@@ -137,6 +125,14 @@ namespace Extensions
             string log = "[";
             foreach (MonoBehaviour item in list) {
                 log += (null != item ? item.name : "(null)") + ", ";
+            }
+            return log.Remove(log.Length - 2, 2) + "]";
+        }
+        
+        public static string ToString(this IList<Vector2> list) {
+            string log = "[";
+            foreach (Vector2 item in list) {
+                log += (item + ", ");
             }
             return log.Remove(log.Length - 2, 2) + "]";
         }

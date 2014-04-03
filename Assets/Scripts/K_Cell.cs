@@ -76,11 +76,11 @@ public class K_Cell : Singleton<K_Cell>
         Array.ForEach(cells, cell => cell.card = null);
     }
 
-    public bool IsNeighbor(IList<K_PlayingCard> cards) {
-        if (cards.Count < 2)
+    public bool IsNeighbor(K_PlayingCard[] cards) {
+        if (cards.Length < 2)
             return false;
 
-        Vector2[] cp = cards.Select(card => Array.Find(cells, cell => card.Equals(cell.card)).coordination).ToArray();
+        Vector2[] cp = cards.Where(x => x != null).Select(x => Array.Find(cells, cell => x.Equals(cell.card)).coordination).ToArray();
 
         // 
         if (Mathf.Abs(cp [cp.Length - 2].x - cp [cp.Length - 1].x) > 1 || Mathf.Abs(cp [cp.Length - 2].y - cp [cp.Length - 1].y) > 1)
@@ -96,9 +96,26 @@ public class K_Cell : Singleton<K_Cell>
         return false;
     }
 
+    public K_PlayingCard[] InLinearCards(K_PlayingCard card) {
+        return this.InLinearCards(new K_PlayingCard[]{card});
+    }
+    public K_PlayingCard[] InLinearCards(K_PlayingCard[] card) {
+        Cell[] ucells = cells.Where(x => !card.Contains(x.card)).ToArray();
+        if (card.Length == 1){
+            return ucells.Where(x => this.IsNeighbor(new K_PlayingCard[]{x.card, card[0]})).Select(x => x.card).ToArray();
+        }
+
+        // Two-point form
+        Vector2[] ab = cells.Where(x => card.First().Equals(x.card) || card.Last().Equals(x.card)).Select(x => x.coordination).ToArray();
+        Func<Vector2, bool> tpf = x => (ab[1].x - ab[0].x) * (x.y - ab[0].y) - (ab[1].y - ab[0].y) * (x.x - ab[0].x) == 0;
+        return ucells.Where(x => tpf(x.coordination)).Select(x => x.card).ToArray();
+    }
+    
     void CellIn() {
 //        int idx = 0;
-        foreach (K_PlayingCard card in Cards.Reverse()) {
+        K_Flag.OnFlag("AllowReGame", false);
+        K_PlayingCard[] reverseCards = Cards.Reverse().ToArray();
+        foreach (K_PlayingCard card in reverseCards) {
             Cell cell = Array.Find(cells, c => card.Equals(c.card));
             if (cell.position == card.transform.GetXY())
                 continue;
@@ -118,5 +135,8 @@ public class K_Cell : Singleton<K_Cell>
             }
             card.RTW.GoWork();
         }
+        reverseCards.Last().RTW.MoreWork(x => {
+            K_Flag.OnFlag("AllowReGame", true);
+        });
     }
 }

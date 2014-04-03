@@ -13,14 +13,17 @@ public class K_PlayingCardManager : MonoBehaviour
 
     public Vector2 Size{ private set; get; }
 
-    public static string Rank(K_PlayingCard[] cards) {
+    public string Rank(K_PlayingCard[] cards) {
+
+        if (cards.Length < 2)
+            return null;
+
+        // Count Number Of Cards
+        int nums = cards.GroupBy(x => x.Number).Count();
         
         // Check Pair
         if (cards.Length < 3)
-            return !cards[0].PairCard(cards[1]) ? null : "One Pair";
-        
-        // Count Number Of Cards
-        int nums = cards.GroupBy(x => x.Number).Count();
+            return nums != 1 ? null : "One Pair";
         
         // Check Three of a Kind
         if (cards.Length < 4)
@@ -29,20 +32,20 @@ public class K_PlayingCardManager : MonoBehaviour
         // Count Suits Of Cards
         int suits = cards.GroupBy(x => x.Suit).Count();
         
-        // Check Two Pair
-        if (nums == 2 && suits == 2)
+        // Check Two Pair or Full House
+        if (nums == 2 && cards[0].PairCard(cards[1]) && cards[cards.Length -1].PairCard(cards[cards.Length -2]))
             return cards.Length != 5 ? "Two Pair" : "Full House";
         
         // Check Four Of A Kind
-        if (nums < 3 && suits == 4)
+        if (cards.Length == 4 && nums == 1 && suits == 4)
             return "Four Of A Kind";
         
-        // 
+        // Check Straight
         if (nums != cards.Length)
             return null;
         
         cards = cards.OrderBy(x => x.Number).ToArray();
-        int[] dis = cards.Skip(1).Select((x, i) => Mathf.Abs(x.Number - cards[i-1].Number))
+        int[] dis = cards.Skip(1).Select((x, i) => Mathf.Abs(x.Number - cards[i].Number))
             .GroupBy(x => x).Select(x => x.Key).ToArray();
         
         // Check Straight
@@ -58,7 +61,32 @@ public class K_PlayingCardManager : MonoBehaviour
         
         return null;
     }
-    
+
+    public int ScoreTable(string rank) {
+        switch (rank) {
+            case "Royal Straight Flush":
+                return 7650000;
+            case "Straight Flush":
+                return 255000;
+            case "Four Of A Kind":
+                return 12500;
+            case "Full House":
+                return 2500;
+            case "Flush":
+                return 1349;
+            case "Straight":
+                return 727;
+            case "Three Of A Kind":
+                return 59;
+            case "Two Pair":
+                return 17;
+            case "One Pair":
+                return 2;
+            default:
+                return 0;
+        }
+    }
+
     public void CreateCards()
     {
         List<K_PlayingCard> playingCards = new List<K_PlayingCard>();

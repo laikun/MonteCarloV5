@@ -60,8 +60,8 @@ public class K_Foundation : Singleton<K_Foundation>
         foreach (K_PlayingCard card in cards)
         {
             card.GetComponentInChildren<SpriteRenderer>().sortingOrder = Array.FindIndex(foundations, x => x.card.Equals(card));
-
-//            card.RTW.Delay(0.04f * dly++);
+            card.GetComponent<UIEventListener>().Init();
+            card.RTW.Delay(0.04f * dly++);
             card.RTW.LerpPosition(new Vector3(-K_GameOptions.Instance.screenSize.x, card.transform.position.y, card.transform.position.z), K_TimeCurve.EaseIn(0.3f));
             card.RTW.MoreWork(x => {
                 x.transform.SetScale(this.Scale);

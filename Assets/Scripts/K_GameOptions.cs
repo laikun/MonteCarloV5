@@ -47,10 +47,10 @@ public class K_GameOptions : Singleton<K_GameOptions>
             return go;
         };
 
-        newOpt(optVslider, "Hint", new int[]{0, 5}, "H");
-        newOpt(optVslider, "TurnLimit", new int[]{5, 30}, "s");
-        newOpt(optVslider, "TimeLimit", new int[]{60, 300}, "s");
-        newOpt(optVslider, "Coin", new int[]{1, 10}, "$");
+//        newOpt(optVslider, "Hint", new int[]{0, 5}, "H");
+//        newOpt(optVslider, "TurnLimit", new int[]{5, 30}, "s");
+//        newOpt(optVslider, "TimeLimit", new int[]{60, 300}, "s");
+//        newOpt(optVslider, "Coin", new int[]{1, 10}, "$");
 
         newOpt(optCheckbox, "AutoDraw", null, null);
         newOpt(optCheckbox, "Column", new int[]{4, 5}, null);
