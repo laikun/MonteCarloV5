@@ -2,7 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using Extensions;
 
 public class K_ReadyToWork : MonoBehaviour
 {
@@ -36,7 +36,6 @@ public class K_ReadyToWork : MonoBehaviour
     }
 
     IEnumerator Waiting() {
-        Debug.Log("WAIT!!");
         while (noIntercept) {
             yield return new WaitForFixedUpdate();
         }
@@ -61,12 +60,14 @@ public class K_ReadyToWork : MonoBehaviour
 
     IEnumerator WorkDo() {
         this.IsWorking = true;
+        this.enabled = false;
         while (this.Works.Count > 0) {
             Work work = this.Works.Dequeue();
             yield return StartCoroutine(work());
         }
         this.IsWorking = false;
         noIntercept = false;
+        this.enabled = true;
     }
 
     IEnumerator monoWork(Action<K_ReadyToWork> work) {
@@ -133,6 +134,27 @@ public class K_ReadyToWork : MonoBehaviour
         else 
             f = getTarget;
         TweenAnimate<T>(this, getTarget, loop, t, f, timecurve, duration);
+    }
+
+    public void LerpTransform(Transform target, Func<TransformData> to, Func<TransformData> from = null, K_TimeCurve timecurve = null, float duration = 1f) {
+        timecurve = timecurve ?? K_TimeCurve.Linear(duration);
+
+        if (from == null)
+            from = () => new TransformData(target);
+        TransformData f = new TransformData();
+        TransformData t = new TransformData();
+        this.MoreWork(x => {
+            f = from();
+            t = to();
+        });
+        this.MoreLoopWork(
+            x => {  
+            timecurve.Progress();
+            target.position = Vector3.Lerp(f.position, t.position, timecurve.Eval);
+            target.localScale = Vector3.Lerp(f.scale, t.scale, timecurve.Eval);
+            target.localRotation = Quaternion.Lerp(f.rotation, t.rotation, timecurve.Eval);
+            },
+        x => timecurve.Eval != 1);
     }
 
     void lerpPosition(Transform target, Vector3 to, Vector3? from = null, K_TimeCurve timecurve = null, float duration = 1f) {

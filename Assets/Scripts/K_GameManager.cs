@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class K_GameManager : MonoBehaviour {
+public class K_GameManager : MonoBehaviour
+{
 
-	// Use this for initialization
-	void Start () {
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    void Awake() {
+        Debug.Log("GameManager Run");
+    }
+
+    void Start() {
+//        K_FB fb = GetComponent<K_FB>();
+//        fb.SendMessage("CallFBInit");
+    }
+
 }

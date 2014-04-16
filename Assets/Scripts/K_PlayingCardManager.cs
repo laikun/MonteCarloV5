@@ -71,7 +71,7 @@ public class K_PlayingCardManager : MonoBehaviour
             case "Four Of A Kind":
                 return 12500;
             case "Full House":
-                return 2500;
+                return 4500;
             case "Flush":
                 return 1349;
             case "Straight":

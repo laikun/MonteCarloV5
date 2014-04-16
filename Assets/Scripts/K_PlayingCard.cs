@@ -2,6 +2,7 @@
 using Extensions;
 using System.Linq;
 using UnityEngine;
+using System;
 
 public class K_PlayingCard : MonoBehaviour, IComparer
 {
@@ -13,7 +14,7 @@ public class K_PlayingCard : MonoBehaviour, IComparer
 
     public float ScaleN { set; get; }
    
-    public UIEventListener UI;
+    public UIEventListener UI {private set;get; }
     public K_ReadyToWork RTW;
     SpriteRenderer SR;
 
@@ -23,7 +24,7 @@ public class K_PlayingCard : MonoBehaviour, IComparer
         this.SR = GetComponentInChildren<SpriteRenderer>();
         this.Size = SR.bounds.size;
 
-        this.UI = this.GetComponent<UIEventListener>();
+        this.UI = this.GetOrAddComponent<UIEventListener>();
         this.RTW = transform.GetOrAddComponent<K_ReadyToWork>();
 
         return this;
@@ -55,36 +56,61 @@ public class K_PlayingCard : MonoBehaviour, IComparer
         return string.Format("[K_PlayingCard: Suit={0}, Number={1}]", Suit, Number);
     }    
 
-    ////////////////////////////////////////////////
+    IEnumerator select() {
+        Vector3 f = transform.localScale;
+        Vector3 t = new Vector3(ScaleN * 0.9f, ScaleN * 0.9f, 1f);
 
-    void select() {
-        RTW.LerpScale(new Vector3(ScaleN * 0.9f, ScaleN * 0.9f, 1f), K_TimeCurve.EaseOut(0.05f));
-        RTW.LerpScale(new Vector3(ScaleN * 1.15f, ScaleN * 1.15f, 1f), K_TimeCurve.EaseOut(0.1f));
-        RTW.GoWork();
+        yield return StartCoroutine(this.LoopWork(x => transform.localScale = Vector3.Lerp(f, t, x), K_TimeCurve.EaseOut(0.05f)));
+
+        f = transform.localScale;
+        t = new Vector3(ScaleN * 1.05f, ScaleN * 1.05f, 1f);
+        Quaternion ff = transform.localRotation;
+        Quaternion tt = Quaternion.Euler(0f, 0f, -7f);
+
+        yield return StartCoroutine(this.LoopWork(x => {
+            transform.localScale = Vector3.Lerp(f, t, x);
+            transform.localRotation = Quaternion.Lerp(ff, tt, x);
+        }, K_TimeCurve.EaseInOut(0.1f)));
     }
 
-    void unselect() {
-        RTW.LerpScale(new Vector3(ScaleN, ScaleN, 1f), K_TimeCurve.EaseOut(0.05f));
-        RTW.GoWork();
+    IEnumerator unselect() {
+        Vector3 f = transform.localScale;
+        Vector3 t = new Vector3(ScaleN, ScaleN, 1f);
+        Quaternion ff = transform.localRotation;
+        Quaternion tt = Quaternion.Euler(0f, 0f, 0f);
+
+        yield return StartCoroutine(this.LoopWork(x => {
+            transform.localScale = Vector3.Lerp(f, t, x);
+            transform.localRotation = Quaternion.Lerp(ff, tt, x);
+        }, K_TimeCurve.EaseInOut(0.05f)));
     }
 
-    void canselect() {
-        RTW.LerpColor(SR.material, Color.white, 0.2f);
-        RTW.GoWork();
+    IEnumerator canselect() {
+
+        Color f = SR.material.color;
+        Color t = Color.white;
+
+        yield return StartCoroutine(this.LoopWork(x => SR.material.color = Color.Lerp(f, t, x), K_TimeCurve.EaseInOut(0.2f)));
     }
     
-    void dontselect() {
-        RTW.LerpColor(SR.material, Color.gray, 0.2f);
-        RTW.GoWork();
+    IEnumerator dontselect() {
+        Color f = SR.material.color;
+        Color t = Color.gray;
+        
+        yield return StartCoroutine(this.LoopWork(x => SR.material.color = Color.Lerp(f, t, x), K_TimeCurve.EaseInOut(0.2f)));
     }
     
-    void hover() { 
-        RTW.LerpColor(SR.material, Color.cyan, 0.2f);
-        RTW.GoWork();
+    IEnumerator hover() { 
+        Color f = SR.material.color;
+        Color t = Color.cyan;
+        
+        yield return StartCoroutine(this.LoopWork(x => SR.material.color = Color.Lerp(f, t, x), K_TimeCurve.EaseInOut(0.2f)));
     }
 
-    void hoverout() {
-        RTW.LerpColor(SR.material, Color.white, 0.2f);
-        RTW.GoWork();
+    IEnumerator hoverout() {
+        Color f = SR.material.color;
+        Color t = Color.white;
+        
+        yield return StartCoroutine(this.LoopWork(x => SR.material.color = Color.Lerp(f, t, x), K_TimeCurve.EaseInOut(0.2f)));
     }
 }

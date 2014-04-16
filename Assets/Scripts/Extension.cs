@@ -21,6 +21,25 @@ namespace Extensions
         }
     }
 
+    public class TransformData {
+        public Vector3 position;
+        public Vector3 scale;
+        public Quaternion rotation;
+        public TransformData() {
+            this.rotation = Quaternion.identity;
+        }        
+        public TransformData(Transform tf) {
+            this.position = tf.position;
+            this.scale = tf.localScale;
+            this.rotation = tf.localRotation;
+        }        
+        public TransformData(Vector3 position, Vector3 scale, Quaternion rotate) {
+            this.position = position;
+            this.scale = scale;
+            this.rotation = rotate;
+        }        
+    }
+
     public static class NormalCurve
     {
         public static AnimationCurve Linear{ get { return AnimationCurve.Linear(0f, 0f, 1f, 1f); } }
@@ -34,6 +53,41 @@ namespace Extensions
 
     public static class ExtensionMethods
     {
+        public static IEnumerator WaitWork(this MonoBehaviour mono, Func<bool> flag = null){
+            while (flag()) {
+                yield return new WaitForFixedUpdate();
+            }
+        }
+
+        public static IEnumerator LoopWork(this MonoBehaviour mono, Action loop, Func<bool> flag = null){
+            mono.enabled = false;
+            
+            do {
+                loop();
+                yield return null;
+            } while (flag());
+            
+            mono.enabled = true;
+        }
+
+        public static IEnumerator LoopWork(this MonoBehaviour mono, Action<float> loop, K_TimeCurve timecurve = null, Func<bool> flag = null, float duration = 1f){
+            mono.enabled = false;
+
+            if (flag == null) 
+                flag = () => timecurve.Eval != 1;
+            
+            if (timecurve == null) 
+                timecurve = K_TimeCurve.Linear(duration);
+            
+            do {
+                timecurve.Progress();
+                loop(timecurve.Eval);
+                yield return null;
+            } while (flag());
+
+            mono.enabled = true;
+        }
+        
         public static T GetSafeComponent<T>(this GameObject obj) where T : MonoBehaviour {
             T component = obj.GetComponent<T>();
                 

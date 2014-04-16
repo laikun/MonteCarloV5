@@ -61,11 +61,11 @@ public class K_Cell : Singleton<K_Cell>
         cellInX = K_GameOptions.Instance.screenSize.x / 2;
     }
 
-    public void DrawToCell(K_PlayingCard[] cards) {
+    public IEnumerator DrawToCell(K_PlayingCard[] cards) {
         Queue<K_PlayingCard> cardsInCell = new Queue<K_PlayingCard>(Cards);
         Array.ForEach(cards, card => cardsInCell.Enqueue(card));
         Array.ForEach(cells, cell => cell.card = cardsInCell.Dequeue());
-        CellIn();
+        yield return StartCoroutine(CellIn());
     }
 
     public void Clear(IList<K_PlayingCard> cards) {
@@ -100,9 +100,13 @@ public class K_Cell : Singleton<K_Cell>
         return this.InLinearCards(new K_PlayingCard[]{card});
     }
     public K_PlayingCard[] InLinearCards(K_PlayingCard[] card) {
+        if (card.Length == 0)
+            return null;
+
         Cell[] ucells = cells.Where(x => !card.Contains(x.card)).ToArray();
         if (card.Length == 1){
-            return ucells.Where(x => this.IsNeighbor(new K_PlayingCard[]{x.card, card[0]})).Select(x => x.card).ToArray();
+            Vector2 cd = Array.Find(cells, x => card[0].Equals(x.card)).coordination;
+            return ucells.Where(x => x.card != null && Mathf.Abs(x.coordination.x - cd.x) <= 1 && Mathf.Abs(x.coordination.x - cd.x) <= 1).Select(x => x.card).ToArray();
         }
 
         // Two-point form
@@ -111,11 +115,11 @@ public class K_Cell : Singleton<K_Cell>
         return ucells.Where(x => tpf(x.coordination)).Select(x => x.card).ToArray();
     }
     
-    void CellIn() {
-//        int idx = 0;
-        K_Flag.OnFlag("AllowReGame", false);
+    IEnumerator CellIn() {
         K_PlayingCard[] reverseCards = Cards.Reverse().ToArray();
+
         foreach (K_PlayingCard card in reverseCards) {
+
             Cell cell = Array.Find(cells, c => card.Equals(c.card));
             if (cell.position == card.transform.GetXY())
                 continue;
@@ -125,7 +129,6 @@ public class K_Cell : Singleton<K_Cell>
             if (card.transform.position.y != cell.position.y) {
                 card.RTW.LerpPosition(new Vector3(-cellInX, card.transform.position.y, card.transform.position.z), 
                                            K_TimeCurve.EaseIn(0.1f * Vector2.Distance(new Vector2(-cellInX, cell.position.y), card.transform.position)));
-//                card.RTW.Delay(0.2f * cell.position.y);
                 card.RTW.LerpPosition(new Vector3(cellInX, cell.position.y, card.transform.position.z),
                                            cell.position.V3(card),
                                            K_TimeCurve.EaseOut(0.1f * Vector2.Distance(new Vector2(cellInX, cell.position.y), cell.position)));
@@ -135,8 +138,7 @@ public class K_Cell : Singleton<K_Cell>
             }
             card.RTW.GoWork();
         }
-        reverseCards.Last().RTW.MoreWork(x => {
-            K_Flag.OnFlag("AllowReGame", true);
-        });
+
+        yield return StartCoroutine(this.WaitWork(() => !reverseCards.Last().RTW.IsWorkDone));
     }
 }

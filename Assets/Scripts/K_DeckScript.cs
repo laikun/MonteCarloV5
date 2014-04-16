@@ -60,14 +60,18 @@ public class K_DeckScript : Singleton<K_DeckScript>
         RTW = transform.GetOrAddComponent<K_ReadyToWork>();
     }
 
-    void onDeckPosition() {
-        Array.ForEach(Cards, x => {
-            K_OnStage.Out(x.gameObject);
-            x.RTW.Delay(0.4f);
-            x.transform.SetXY(deckPosition);});
+    IEnumerator onDeckPosition() {
+        enabled = false;
+        Array.ForEach(Cards, x => K_OnStage.Out(x));
+        yield return new WaitForSeconds(0.4f);
 
-        RTW.LerpPosition(deckPosition.V3(this.transform.position), K_TimeCurve.EaseOut(0.4f));
-        RTW.GoWork();
+        Array.ForEach(Cards, x => x.transform.SetXY(deckPosition));
+
+        Vector3 f = transform.position;
+        Vector3 t = deckPosition.V3(f);
+
+        yield return StartCoroutine(this.LoopWork(x => transform.position = Vector3.Lerp(f, t, x), K_TimeCurve.EaseOut(0.4f)));
+        enabled = true;
     }
 
     void showNextCard() {
@@ -77,7 +81,7 @@ public class K_DeckScript : Singleton<K_DeckScript>
     }
 
     // ReDeck
-    void shuffle(K_PlayingCard[] cards) {
+    IEnumerator shuffle(K_PlayingCard[] cards) {
         Func<float, float, float> r = (n, m) => UnityEngine.Random.Range(n, m);
         Action<K_PlayingCard, K_DeckScript> w = (c, d) => {
             Vector2 op = c.transform.GetXY() != Vector2.zero ? c.transform.GetXY() : new Vector2(r(-0.5f, 0.5f), r(-0.5f, 0.5f));
@@ -92,25 +96,32 @@ public class K_DeckScript : Singleton<K_DeckScript>
             c.RTW.Delay(r(0.0f, 0.1f));
             K_ReadyToWork.TweenAnimate(c.RTW, s, loop, () => new Vector3(this.transform.position.x, this.transform.position.y, c.transform.position.z), s, K_TimeCurve.EaseIn(r(0.3f, 0.4f)));
         };
-        RTW.MoreWork(x => K_Flag.OnFlag("ReadyToStart", false));
-        RTW.LerpPosition(new Vector3(this.transform.position.x, K_GameOptions.Instance.screenSize.y / 1.5f, this.transform.position.z), K_TimeCurve.EaseIn(0.3f));
-        RTW.LerpPosition(new Vector3(0f, K_GameOptions.Instance.screenSize.y, this.transform.position.z), new Vector3(0f, 0f, this.transform.position.z), K_TimeCurve.EaseIn(0.3f));
-        RTW.MoreWork(x => Array.ForEach(this._cards.ToArray(), card => {
+
+        /////////
+        K_Flag.On("ReadyToStart", false);
+        yield return StartCoroutine(this.LoopWork(x => transform.Translate(Vector3.up * x), 
+                                                  K_TimeCurve.EaseIn(0.3f), 
+                                                  () => transform.position.y < K_GameOptions.Instance.screenSize.y / 1.5f));
+        transform.SetXY(new Vector3(0f, transform.position.y));
+        yield return StartCoroutine(this.LoopWork(x => transform.Translate(Vector3.down * x), 
+                                                  K_TimeCurve.EaseIn(0.3f), 
+                                                  () => transform.position.y > 0f));
+        Array.ForEach(this._cards.ToArray(), card => {
             card.transform.SetXY(this.transform.GetXY());
-            K_OnStage.In(card);
-        }));
+            K_OnStage.In(card);});
         RTW.MoreWork(x => Array.ForEach(cards, card => {
             card.RTW.WorkGone();
             w(card, this);
+            card.RTW.MoreWork(y => y.SendMessage("unselect"));
             card.RTW.ForceWork();
         }));
-        RTW.Delay(1f);
-        RTW.MoreWork(x => {
-            RTW.NoIntercept = false;
-            this.ReInit(cards);
-            K_Flag.OnFlag("ReadyToStart", true);
-        });
-        RTW.GoWork();
         RTW.NoIntercept = true;
+        RTW.GoWork();
+
+        yield return new WaitForSeconds(1f);
+
+        RTW.NoIntercept = false;
+        this.ReInit(cards);
+        K_Flag.On("ReadyToStart", true);
     }
 }
